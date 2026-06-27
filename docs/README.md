@@ -27,6 +27,22 @@ backend は上記を既定値として接続する（`backend/src/main/resources
 環境変数 `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD`
 で上書き可能。スキーマは Flyway（`backend/src/main/resources/db/migration/`）で管理する。
 
+## フロントエンド
+
+```bash
+cd frontend
+npm install
+npm run dev    # http://localhost:5173（/api を backend :8080 へ proxy）
+npm test       # Vitest
+```
+
+- backend 起動中（`docker compose up -d db` ＋ `./gradlew bootRun`）であれば、dev サーバ経由でブラウザから API に到達できる（同一オリジン扱いで CORS 不要）。
+- API の TypeScript 型は backend の `/v3/api-docs` を `frontend/openapi.json` に保存し、`npm run gen:api` で生成する（API 変更時に再生成）。
+
+## API ドキュメント
+
+backend 起動中に Swagger UI（`http://localhost:8080/swagger-ui/index.html`）/ OpenAPI（`/v3/api-docs`）で確認できる。
+
 ## 開発の進め方
 
 - タスクは GitHub Issue / マイルストーン（M0 基盤整備 → M1 backend CRUD → M2 frontend UI）で管理。

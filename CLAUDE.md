@@ -33,10 +33,12 @@ Frontend (`frontend/`, Node 22 + **npm 11** — older npm mis-validates the lock
 
 ```bash
 npm install        # or: npm ci
-npm run dev        # Vite dev server on :5173
+npm run dev        # Vite dev server on :5173 (proxies /api → backend :8080)
 npm run build      # tsc -b + vite build
 npm run lint       # oxlint
 npm run format     # prettier --write
+npm test           # vitest run
+npm run gen:api    # regenerate src/api/schema.d.ts from openapi.json (after API changes)
 ```
 
 ## Architecture
@@ -66,14 +68,19 @@ Key conventions:
 - Use cases are interfaces in `port/in`; controllers depend only on those interfaces.
 - Schema is owned by **Flyway** (`backend/src/main/resources/db/migration/`); JPA runs with
   `ddl-auto=validate`. Datasource defaults to the compose DB, overridable via `SPRING_DATASOURCE_*`.
-- Dependency direction will be enforced by **ArchUnit** tests (added in issue #8).
+- Dependency direction is enforced by **ArchUnit** (`LedgerArchitectureTest` + the
+  `HexagonalArchitecture` DSL under `src/test/java/com/sumika/archunit/`).
+- Errors are returned as RFC 7807 `ProblemDetail` via a `@RestControllerAdvice` in `common`.
 
 ### Frontend — React + Vite + TypeScript
 
 React Router for routing, TanStack Query for server state, axios for HTTP (shared instance in
-`src/api/client.ts`, base URL via `VITE_API_BASE_URL`). Providers are wired in `src/main.tsx`.
-Directory policy: `api/` (clients), `features/` (feature modules), `components/` (shared UI),
-`pages/` (route screens).
+`src/api/client.ts`). The axios base URL defaults to a relative `/api`; in dev, Vite proxies `/api`
+to the backend on `:8080` (same-origin, no CORS), overridable via `VITE_API_BASE_URL`. API types are
+generated from the backend's OpenAPI (`openapi.json` → `src/api/schema.d.ts` via `npm run gen:api`).
+Providers (`ErrorBoundary` / `QueryClientProvider` / `ToastProvider` / `BrowserRouter`) are wired in
+`src/main.tsx`. Directory policy: `api/` (client, types, hooks), `features/` (feature modules with
+their screens), `components/` (shared UI). Tests use Vitest + React Testing Library.
 
 ## CI & workflow
 
