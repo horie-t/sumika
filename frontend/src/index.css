@@ -19,6 +19,25 @@ main {
   padding: 2rem 1rem;
 }
 
+.nav {
+  display: flex;
+  gap: 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border, #ddd);
+}
+
+.nav a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
