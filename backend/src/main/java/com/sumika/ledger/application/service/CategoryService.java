@@ -52,8 +52,7 @@ class CategoryService implements ManageCategoryUseCase, GetCategoriesQuery {
   public void deleteCategory(CategoryId id) {
     requireCategoryExists(id);
     if (this.loadTransactionPort.existsByCategory(id)) {
-      throw new CategoryInUseException(
-          "category is used by transactions and cannot be deleted: " + id.value());
+      throw new CategoryInUseException("このカテゴリは収支記録で使用されているため削除できません");
     }
     this.deleteCategoryPort.deleteCategory(id);
   }
@@ -66,7 +65,7 @@ class CategoryService implements ManageCategoryUseCase, GetCategoriesQuery {
 
   private void requireCategoryExists(CategoryId id) {
     if (!this.loadCategoryPort.existsCategory(id)) {
-      throw new ResourceNotFoundException("category not found: " + id.value());
+      throw new ResourceNotFoundException("カテゴリが見つかりません: " + id.value());
     }
   }
 }

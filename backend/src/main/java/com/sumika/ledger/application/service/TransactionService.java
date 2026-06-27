@@ -89,7 +89,7 @@ class TransactionService
 
   private void requireTransactionExists(TransactionId id) {
     if (this.loadTransactionPort.loadTransaction(id).isEmpty()) {
-      throw new ResourceNotFoundException("transaction not found: " + id.value());
+      throw new ResourceNotFoundException("収支記録が見つかりません: " + id.value());
     }
   }
 
@@ -99,9 +99,9 @@ class TransactionService
         this.loadCategoryPort
             .loadCategory(categoryId)
             .orElseThrow(
-                () -> new ResourceNotFoundException("category not found: " + categoryId.value()));
+                () -> new ResourceNotFoundException("カテゴリが見つかりません: " + categoryId.value()));
     if (category.type() != type) {
-      throw new IllegalArgumentException("transaction type must match category type");
+      throw new IllegalArgumentException("収支の種別がカテゴリの種別と一致しません");
     }
   }
 }
