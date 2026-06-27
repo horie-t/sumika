@@ -33,6 +33,11 @@ cd frontend && npm install && npm run dev
 - タスクは GitHub Issue / マイルストーン（M0 基盤整備 → M1 backend CRUD → M2 frontend UI）で管理。
 - 1 Issue = 1 PR。詳細なコマンド・アーキテクチャは各ディレクトリの README と `CLAUDE.md` を参照。
 
+## デプロイ（AWS / PoC）
+
+ECS Fargate Spot + S3/CloudFront + Aurora Serverless v2 を Terraform / GitHub Actions(OIDC) で。
+手順は [docs/deploy.md](docs/deploy.md)、IaC は [infra/](infra/) を参照。
+
 ## ライセンス
 
 BSD 3-Clause License
