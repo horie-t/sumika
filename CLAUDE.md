@@ -84,7 +84,9 @@ their screens), `components/` (shared UI). Tests use Vitest + React Testing Libr
 
 ## CI & workflow
 
-- 1 Issue = 1 PR. `main` is protected (PR required, no direct push / force-push / deletion).
-- GitHub Actions: `backend.yml` (`./gradlew build`) and `frontend.yml` (`npm ci → lint → build → test`),
-  each path-filtered to its directory. CI is not a required check (the path filters would otherwise
-  block unrelated PRs).
+- 1 Issue = 1 PR. `main` is protected: PR required (0 approvals), no direct push / force-push /
+  deletion, conversation resolution required, and the **`ci-success` status check is required**.
+- GitHub Actions (`.github/workflows/ci.yml`): a `changes` job (path filter) runs `backend`
+  (`./gradlew build`) and `frontend` (`npm ci → lint → build → test`) only when that area changed;
+  a final **`ci-success`** job (`needs: [backend, frontend]`, `if: always()`) is the single required
+  check — it passes when the area jobs succeed or are skipped, so docs-only / unrelated PRs aren't blocked.
