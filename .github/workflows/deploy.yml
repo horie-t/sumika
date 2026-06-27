@@ -1,0 +1,67 @@
+name: deploy
+
+# アプリ（backend イメージ / frontend 静的）の CD。インフラ(Terraform)とは分離。
+# 実行には事前に Terraform apply とリポジトリ変数の設定が必要。
+# 準備が整うまで誤発火しないよう、vars.DEPLOY_ENABLED == 'true' でガードする。
+#
+# 必要な Actions variables（terraform output から設定）:
+#   DEPLOY_ENABLED, AWS_REGION, AWS_DEPLOY_ROLE_ARN, ECR_REPOSITORY,
+#   ECS_CLUSTER, ECS_SERVICE, FRONTEND_BUCKET, CLOUDFRONT_DISTRIBUTION_ID
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  backend:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push image
+        run: |
+          docker build -t "${{ vars.ECR_REPOSITORY }}:latest" -t "${{ vars.ECR_REPOSITORY }}:${{ github.sha }}" backend
+          docker push "${{ vars.ECR_REPOSITORY }}:latest"
+          docker push "${{ vars.ECR_REPOSITORY }}:${{ github.sha }}"
+      - name: Trigger ECS rollout
+        run: |
+          aws ecs update-service \
+            --cluster "${{ vars.ECS_CLUSTER }}" \
+            --service "${{ vars.ECS_SERVICE }}" \
+            --force-new-deployment
+
+  frontend:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install -g npm@11
+      - working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Sync to S3 and invalidate CloudFront
+        run: |
+          aws s3 sync frontend/dist "s3://${{ vars.FRONTEND_BUCKET }}" --delete
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
