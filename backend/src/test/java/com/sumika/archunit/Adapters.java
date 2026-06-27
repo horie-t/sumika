@@ -41,6 +41,11 @@ public class Adapters extends ArchitectureElement {
     return all;
   }
 
+  /** 空でないことを検証する対象パッケージ（incoming/outgoing アダプタ）。 */
+  List<String> leafPackages() {
+    return allAdapterPackages();
+  }
+
   /** incoming / outgoing アダプタが互いに直接依存しないことを検証する。 */
   void dontDependOnEachOther(JavaClasses classes) {
     List<String> all = allAdapterPackages();

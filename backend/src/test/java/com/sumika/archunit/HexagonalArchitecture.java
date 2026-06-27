@@ -57,15 +57,18 @@ public class HexagonalArchitecture extends ArchitectureElement {
   }
 
   /**
-   * 依存方向（常に内向き: {@code adapter -> application -> domain}）を検証する。
-   *
-   * <p>各レイヤが空でないことの検証（{@code doesNotContainEmptyPackages}）は、
-   * 各層にクラスが揃う #14 で有効化する。
+   * 依存方向（常に内向き: {@code adapter -> application -> domain}）と、各レイヤが空でないことを
+   * 検証する。
    */
   public void check(JavaClasses classes) {
     this.adapters.dontDependOnEachOther(classes);
     this.applicationLayer.doesNotDependOn(this.adapters.getBasePackage(), classes);
     this.applicationLayer.incomingAndOutgoingPortsDoNotDependOnEachOther(classes);
     this.domainDoesNotDependOnOtherPackages(classes);
+
+    List<String> leafPackages = new ArrayList<>(this.domainPackages);
+    leafPackages.addAll(this.adapters.leafPackages());
+    leafPackages.addAll(this.applicationLayer.leafPackages());
+    denyEmptyPackages(leafPackages, classes);
   }
 }

@@ -1,21 +1,21 @@
 package com.sumika.ledger;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+
 import com.sumika.archunit.HexagonalArchitecture;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import org.junit.jupiter.api.Test;
 
-/**
- * {@code ledger} bounded context がヘキサゴナル構成（依存は常に内向き）であることを検証する。
- *
- * <p>レイヤにクラスが追加されるにつれてルールが効いてくる（#9 以降）。
- */
+/** {@code ledger} bounded context のアーキテクチャ検証（依存方向・層構成・非循環）。 */
 class LedgerArchitectureTest {
+
+  private final JavaClasses ledgerClasses =
+      new ClassFileImporter().importPackages("com.sumika.ledger");
 
   @Test
   void ledgerContextFollowsHexagonalArchitecture() {
-    JavaClasses classes = new ClassFileImporter().importPackages("com.sumika.ledger");
-
     HexagonalArchitecture.boundedContext("com.sumika.ledger")
         .withDomainLayer("domain")
         .withAdaptersLayer("adapter")
@@ -27,6 +27,26 @@ class LedgerArchitectureTest {
         .outgoingPorts("port.out")
         .services("service")
         .and()
-        .check(classes);
+        .check(this.ledgerClasses);
+  }
+
+  @Test
+  void domainIsFrameworkIndependent() {
+    noClasses()
+        .that()
+        .resideInAPackage("com.sumika.ledger.domain..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAnyPackage("org.springframework..", "jakarta.persistence..", "org.hibernate..")
+        .check(this.ledgerClasses);
+  }
+
+  @Test
+  void ledgerSlicesAreFreeOfCycles() {
+    slices()
+        .matching("com.sumika.ledger.(*)..")
+        .should()
+        .beFreeOfCycles()
+        .check(this.ledgerClasses);
   }
 }
