@@ -6,20 +6,13 @@ import {
   useTransactions,
   useUpdateTransaction,
 } from '../../api/hooks'
+import { apiErrorMessage } from '../../api/errors'
 import type { TransactionFilter } from '../../api/transactions'
 import type { Transaction, TransactionInput } from '../../api/types'
 import { TransactionFilters, type FilterValues } from './TransactionFilters'
 import { TransactionForm } from './TransactionForm'
 
 const yen = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' })
-
-function toMessage(error: unknown): string {
-  if (error && typeof error === 'object' && 'response' in error) {
-    const response = (error as { response?: { data?: { detail?: string } } }).response
-    if (response?.data?.detail) return response.data.detail
-  }
-  return '保存に失敗しました'
-}
 
 export default function TransactionsPage() {
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -92,7 +85,7 @@ export default function TransactionsPage() {
           categories={categoriesQuery.data ?? []}
           initial={editing ?? undefined}
           submitting={createTransaction.isPending || updateTransaction.isPending}
-          errorMessage={activeError ? toMessage(activeError) : undefined}
+          errorMessage={activeError ? apiErrorMessage(activeError) : undefined}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />
