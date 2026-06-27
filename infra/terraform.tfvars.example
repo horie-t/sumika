@@ -1,0 +1,14 @@
+# これをコピーして terraform.tfvars を作成し、自分の値を設定する。
+# route53_zone_id と api_hostname は必須（既存ゾーン）。
+
+route53_zone_id = "Z0123456789ABCDEFGHIJ"
+api_hostname    = "api-poc.example.com"
+
+# 任意（既定あり）
+# region          = "ap-northeast-1"
+# project         = "sumika-poc"
+# github_repo     = "horie-t/sumika"
+# aurora_min_acu  = 0
+# aurora_max_acu  = 2
+# stop_cron       = "cron(0 22 * * ? *)"   # JST 22:00 停止
+# start_cron      = "cron(0 9 * * ? *)"    # JST 09:00 起動
