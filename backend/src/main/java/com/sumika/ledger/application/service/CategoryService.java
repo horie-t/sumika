@@ -1,5 +1,6 @@
 package com.sumika.ledger.application.service;
 
+import com.sumika.common.CategoryInUseException;
 import com.sumika.common.ResourceNotFoundException;
 import com.sumika.ledger.application.port.in.GetCategoriesQuery;
 import com.sumika.ledger.application.port.in.ManageCategoryUseCase;
@@ -7,6 +8,7 @@ import com.sumika.ledger.application.port.in.RegisterCategoryCommand;
 import com.sumika.ledger.application.port.in.UpdateCategoryCommand;
 import com.sumika.ledger.application.port.out.DeleteCategoryPort;
 import com.sumika.ledger.application.port.out.LoadCategoryPort;
+import com.sumika.ledger.application.port.out.LoadTransactionPort;
 import com.sumika.ledger.application.port.out.SaveCategoryPort;
 import com.sumika.ledger.domain.Category;
 import com.sumika.ledger.domain.CategoryId;
@@ -21,14 +23,17 @@ class CategoryService implements ManageCategoryUseCase, GetCategoriesQuery {
   private final LoadCategoryPort loadCategoryPort;
   private final SaveCategoryPort saveCategoryPort;
   private final DeleteCategoryPort deleteCategoryPort;
+  private final LoadTransactionPort loadTransactionPort;
 
   CategoryService(
       LoadCategoryPort loadCategoryPort,
       SaveCategoryPort saveCategoryPort,
-      DeleteCategoryPort deleteCategoryPort) {
+      DeleteCategoryPort deleteCategoryPort,
+      LoadTransactionPort loadTransactionPort) {
     this.loadCategoryPort = loadCategoryPort;
     this.saveCategoryPort = saveCategoryPort;
     this.deleteCategoryPort = deleteCategoryPort;
+    this.loadTransactionPort = loadTransactionPort;
   }
 
   @Override
@@ -46,6 +51,10 @@ class CategoryService implements ManageCategoryUseCase, GetCategoriesQuery {
   @Override
   public void deleteCategory(CategoryId id) {
     requireCategoryExists(id);
+    if (this.loadTransactionPort.existsByCategory(id)) {
+      throw new CategoryInUseException(
+          "category is used by transactions and cannot be deleted: " + id.value());
+    }
     this.deleteCategoryPort.deleteCategory(id);
   }
 

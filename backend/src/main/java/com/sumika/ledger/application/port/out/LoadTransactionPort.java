@@ -1,5 +1,6 @@
 package com.sumika.ledger.application.port.out;
 
+import com.sumika.ledger.domain.CategoryId;
 import com.sumika.ledger.domain.Transaction;
 import com.sumika.ledger.domain.TransactionId;
 import java.util.List;
@@ -11,4 +12,7 @@ public interface LoadTransactionPort {
   Optional<Transaction> loadTransaction(TransactionId id);
 
   List<Transaction> findTransactions(TransactionSearchCriteria criteria);
+
+  /** 指定カテゴリを参照する収支記録が存在するか。 */
+  boolean existsByCategory(CategoryId categoryId);
 }

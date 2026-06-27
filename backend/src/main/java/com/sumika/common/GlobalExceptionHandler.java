@@ -20,6 +20,11 @@ class GlobalExceptionHandler {
     return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
   }
 
+  @ExceptionHandler(CategoryInUseException.class)
+  ProblemDetail handleConflict(CategoryInUseException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
   @ExceptionHandler({IllegalArgumentException.class, ConstraintViolationException.class})
   ProblemDetail handleBadRequest(RuntimeException ex) {
     return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());

@@ -7,11 +7,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.sumika.common.CategoryInUseException;
 import com.sumika.common.ResourceNotFoundException;
 import com.sumika.ledger.application.port.in.RegisterCategoryCommand;
 import com.sumika.ledger.application.port.in.UpdateCategoryCommand;
 import com.sumika.ledger.application.port.out.DeleteCategoryPort;
 import com.sumika.ledger.application.port.out.LoadCategoryPort;
+import com.sumika.ledger.application.port.out.LoadTransactionPort;
 import com.sumika.ledger.application.port.out.SaveCategoryPort;
 import com.sumika.ledger.domain.Category;
 import com.sumika.ledger.domain.CategoryId;
@@ -30,13 +32,18 @@ class CategoryServiceTest {
   @Mock private LoadCategoryPort loadCategoryPort;
   @Mock private SaveCategoryPort saveCategoryPort;
   @Mock private DeleteCategoryPort deleteCategoryPort;
+  @Mock private LoadTransactionPort loadTransactionPort;
 
   private CategoryService service;
 
   @BeforeEach
   void setUp() {
     this.service =
-        new CategoryService(this.loadCategoryPort, this.saveCategoryPort, this.deleteCategoryPort);
+        new CategoryService(
+            this.loadCategoryPort,
+            this.saveCategoryPort,
+            this.deleteCategoryPort,
+            this.loadTransactionPort);
   }
 
   @Test
@@ -73,10 +80,21 @@ class CategoryServiceTest {
   @Test
   void deletesExistingCategory() {
     when(this.loadCategoryPort.existsCategory(CategoryId.of(5))).thenReturn(true);
+    when(this.loadTransactionPort.existsByCategory(CategoryId.of(5))).thenReturn(false);
 
     this.service.deleteCategory(CategoryId.of(5));
 
     verify(this.deleteCategoryPort).deleteCategory(CategoryId.of(5));
+  }
+
+  @Test
+  void deleteFailsWhenCategoryInUse() {
+    when(this.loadCategoryPort.existsCategory(CategoryId.of(5))).thenReturn(true);
+    when(this.loadTransactionPort.existsByCategory(CategoryId.of(5))).thenReturn(true);
+
+    assertThatThrownBy(() -> this.service.deleteCategory(CategoryId.of(5)))
+        .isInstanceOf(CategoryInUseException.class);
+    verifyNoInteractions(this.deleteCategoryPort);
   }
 
   @Test
