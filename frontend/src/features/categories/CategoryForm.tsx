@@ -4,12 +4,11 @@ import type { Category, CategoryInput, EntryType } from '../../api/types'
 interface Props {
   initial?: Category
   submitting?: boolean
-  errorMessage?: string
   onSubmit: (input: CategoryInput) => void
   onCancel: () => void
 }
 
-export function CategoryForm({ initial, submitting, errorMessage, onSubmit, onCancel }: Props) {
+export function CategoryForm({ initial, submitting, onSubmit, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [type, setType] = useState<EntryType>(initial?.type ?? 'EXPENSE')
   const [error, setError] = useState<string | null>(null)
@@ -32,11 +31,6 @@ export function CategoryForm({ initial, submitting, errorMessage, onSubmit, onCa
   return (
     <form className="transaction-form" onSubmit={handleSubmit}>
       <h2>{initial ? 'カテゴリを編集' : 'カテゴリを追加'}</h2>
-      {errorMessage ? (
-        <p role="alert" className="form-error">
-          {errorMessage}
-        </p>
-      ) : null}
 
       <div className="field">
         <label>

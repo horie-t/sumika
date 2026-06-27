@@ -6,6 +6,7 @@ import {
   useDeleteCategory,
   useUpdateCategory,
 } from '../../api/hooks'
+import { useToast } from '../../components/toast-context'
 import type { Category, CategoryInput } from '../../api/types'
 import { CategoryForm } from './CategoryForm'
 
@@ -13,6 +14,7 @@ export default function CategoriesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
 
+  const { showToast } = useToast()
   const categoriesQuery = useCategories()
   const createCategory = useCreateCategory()
   const updateCategory = useUpdateCategory()
@@ -37,20 +39,36 @@ export default function CategoriesPage() {
 
   function handleSubmit(input: CategoryInput) {
     if (editing?.id != null) {
-      updateCategory.mutate({ id: editing.id, input }, { onSuccess: closeForm })
+      updateCategory.mutate(
+        { id: editing.id, input },
+        {
+          onSuccess: () => {
+            showToast('カテゴリを更新しました')
+            closeForm()
+          },
+          onError: (error) => showToast(apiErrorMessage(error), 'error'),
+        },
+      )
     } else {
-      createCategory.mutate(input, { onSuccess: closeForm })
+      createCategory.mutate(input, {
+        onSuccess: () => {
+          showToast('カテゴリを追加しました')
+          closeForm()
+        },
+        onError: (error) => showToast(apiErrorMessage(error), 'error'),
+      })
     }
   }
 
   function handleDelete(category: Category) {
     if (category.id == null) return
     if (window.confirm(`カテゴリ「${category.name}」を削除しますか？`)) {
-      deleteCategory.mutate(category.id)
+      deleteCategory.mutate(category.id, {
+        onSuccess: () => showToast('カテゴリを削除しました'),
+        onError: (error) => showToast(apiErrorMessage(error, '削除に失敗しました'), 'error'),
+      })
     }
   }
-
-  const activeError = editing ? updateCategory.error : createCategory.error
 
   return (
     <main>
@@ -60,7 +78,6 @@ export default function CategoriesPage() {
         <CategoryForm
           initial={editing ?? undefined}
           submitting={createCategory.isPending || updateCategory.isPending}
-          errorMessage={activeError ? apiErrorMessage(activeError) : undefined}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />
@@ -69,12 +86,6 @@ export default function CategoriesPage() {
           新規追加
         </button>
       )}
-
-      {deleteCategory.isError ? (
-        <p role="alert" className="form-error">
-          {apiErrorMessage(deleteCategory.error, '削除に失敗しました')}
-        </p>
-      ) : null}
 
       {categoriesQuery.isPending ? (
         <p>読み込み中...</p>

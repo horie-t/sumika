@@ -106,3 +106,42 @@ main {
   display: flex;
   gap: 0.5rem;
 }
+
+.global-loading {
+  position: fixed;
+  top: 0;
+  right: 0;
+  margin: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.8rem;
+  z-index: 1000;
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.toast {
+  min-width: 200px;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toast-success {
+  background: #2e7d32;
+}
+
+.toast-error {
+  background: #c62828;
+}

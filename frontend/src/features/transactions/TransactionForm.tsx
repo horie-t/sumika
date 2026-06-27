@@ -5,7 +5,6 @@ interface Props {
   categories: Category[]
   initial?: Transaction
   submitting?: boolean
-  errorMessage?: string
   onSubmit: (input: TransactionInput) => void
   onCancel: () => void
 }
@@ -28,14 +27,7 @@ function toFormState(initial?: Transaction): FormState {
   }
 }
 
-export function TransactionForm({
-  categories,
-  initial,
-  submitting,
-  errorMessage,
-  onSubmit,
-  onCancel,
-}: Props) {
+export function TransactionForm({ categories, initial, submitting, onSubmit, onCancel }: Props) {
   const [form, setForm] = useState<FormState>(() => toFormState(initial))
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -90,11 +82,6 @@ export function TransactionForm({
   return (
     <form className="transaction-form" onSubmit={handleSubmit}>
       <h2>{initial ? '収支を編集' : '収支を登録'}</h2>
-      {errorMessage ? (
-        <p role="alert" className="form-error">
-          {errorMessage}
-        </p>
-      ) : null}
 
       <div className="field">
         <label>

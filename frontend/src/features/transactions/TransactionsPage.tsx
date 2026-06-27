@@ -7,6 +7,7 @@ import {
   useUpdateTransaction,
 } from '../../api/hooks'
 import { apiErrorMessage } from '../../api/errors'
+import { useToast } from '../../components/toast-context'
 import type { TransactionFilter } from '../../api/transactions'
 import type { Transaction, TransactionInput } from '../../api/types'
 import { TransactionFilters, type FilterValues } from './TransactionFilters'
@@ -31,6 +32,7 @@ export default function TransactionsPage() {
     return next
   }, [filterValues])
 
+  const { showToast } = useToast()
   const categoriesQuery = useCategories()
   const transactionsQuery = useTransactions(filter)
   const createTransaction = useCreateTransaction()
@@ -61,20 +63,36 @@ export default function TransactionsPage() {
 
   function handleSubmit(input: TransactionInput) {
     if (editing?.id != null) {
-      updateTransaction.mutate({ id: editing.id, input }, { onSuccess: closeForm })
+      updateTransaction.mutate(
+        { id: editing.id, input },
+        {
+          onSuccess: () => {
+            showToast('収支を更新しました')
+            closeForm()
+          },
+          onError: (error) => showToast(apiErrorMessage(error), 'error'),
+        },
+      )
     } else {
-      createTransaction.mutate(input, { onSuccess: closeForm })
+      createTransaction.mutate(input, {
+        onSuccess: () => {
+          showToast('収支を登録しました')
+          closeForm()
+        },
+        onError: (error) => showToast(apiErrorMessage(error), 'error'),
+      })
     }
   }
 
   function handleDelete(transaction: Transaction) {
     if (transaction.id == null) return
     if (window.confirm('この収支記録を削除しますか？')) {
-      deleteTransaction.mutate(transaction.id)
+      deleteTransaction.mutate(transaction.id, {
+        onSuccess: () => showToast('収支を削除しました'),
+        onError: (error) => showToast(apiErrorMessage(error, '削除に失敗しました'), 'error'),
+      })
     }
   }
-
-  const activeError = editing ? updateTransaction.error : createTransaction.error
 
   return (
     <main>
@@ -85,7 +103,6 @@ export default function TransactionsPage() {
           categories={categoriesQuery.data ?? []}
           initial={editing ?? undefined}
           submitting={createTransaction.isPending || updateTransaction.isPending}
-          errorMessage={activeError ? apiErrorMessage(activeError) : undefined}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />
