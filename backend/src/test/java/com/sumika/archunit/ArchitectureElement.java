@@ -2,6 +2,7 @@ package com.sumika.archunit;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import java.util.List;
 
@@ -47,5 +48,26 @@ abstract class ArchitectureElement {
 
   static String matchAllClassesInPackage(String packageName) {
     return packageName + "..";
+  }
+
+  /** 各パッケージが（package-info を除く）実クラスを 1 つ以上含むことを検証する。 */
+  static void denyEmptyPackages(List<String> packages, JavaClasses classes) {
+    for (String packageName : packages) {
+      if (!containsRealClass(classes, packageName)) {
+        throw new AssertionError(
+            "Hexagonal architecture violated: package is empty: " + packageName);
+      }
+    }
+  }
+
+  private static boolean containsRealClass(JavaClasses classes, String packageName) {
+    for (JavaClass clazz : classes) {
+      String pkg = clazz.getPackageName();
+      boolean inPackage = pkg.equals(packageName) || pkg.startsWith(packageName + ".");
+      if (inPackage && !clazz.getName().endsWith(".package-info")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

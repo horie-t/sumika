@@ -41,6 +41,15 @@ public class ApplicationLayer extends ArchitectureElement {
     return this.basePackage;
   }
 
+  /** 空でないことを検証する対象パッケージ（in/out ポート・サービス）。 */
+  List<String> leafPackages() {
+    List<String> all = new ArrayList<>();
+    all.addAll(this.incomingPortsPackages);
+    all.addAll(this.outgoingPortsPackages);
+    all.addAll(this.servicePackages);
+    return all;
+  }
+
   void doesNotDependOn(String packageName, JavaClasses classes) {
     denyDependency(this.basePackage, packageName, classes);
   }
