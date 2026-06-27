@@ -25,6 +25,9 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      # 開発環境に合わせ npm 11 を使用（Node 22 同梱の npm 10 は npm 11 製 lock の
+      # wasm-runtime 系 optional 依存を欠落扱いして npm ci が失敗するため）
+      - run: npm install -g npm@11
       - run: npm ci
       - run: npm run lint
       - run: npm run build
