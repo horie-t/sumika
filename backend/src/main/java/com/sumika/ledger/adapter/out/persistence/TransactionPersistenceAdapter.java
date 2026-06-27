@@ -4,6 +4,7 @@ import com.sumika.ledger.application.port.out.DeleteTransactionPort;
 import com.sumika.ledger.application.port.out.LoadTransactionPort;
 import com.sumika.ledger.application.port.out.SaveTransactionPort;
 import com.sumika.ledger.application.port.out.TransactionSearchCriteria;
+import com.sumika.ledger.domain.CategoryId;
 import com.sumika.ledger.domain.Transaction;
 import com.sumika.ledger.domain.TransactionId;
 import java.time.LocalDate;
@@ -30,6 +31,11 @@ class TransactionPersistenceAdapter
   @Override
   public Optional<Transaction> loadTransaction(TransactionId id) {
     return this.repository.findById(id.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public boolean existsByCategory(CategoryId categoryId) {
+    return this.repository.existsByCategoryId(categoryId.value());
   }
 
   @Override

@@ -16,11 +16,18 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-/** HTTP からの 登録→取得→更新→削除 を実 PostgreSQL に対して通すハッピーパス E2E。 */
+/**
+ * HTTP からの 登録→取得→更新→削除 を実 PostgreSQL に対して通す E2E。
+ *
+ * <p>各テストは {@link Transactional} でロールバックして分離する（MockMvc は同一スレッドで
+ * 実行されるためテストのトランザクションに参加する）。
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+@Transactional
 class LedgerE2ETest {
 
   @Autowired private MockMvc mockMvc;
@@ -82,6 +89,35 @@ class LedgerE2ETest {
         .perform(get("/api/transactions"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void deletingCategoryInUseReturns409() throws Exception {
+    long categoryId =
+        idOf(
+            this.mockMvc
+                .perform(
+                    post("/api/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"utility\",\"type\":\"EXPENSE\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+
+    this.mockMvc
+        .perform(
+            post("/api/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"type\":\"EXPENSE\",\"amount\":500,\"categoryId\":"
+                        + categoryId
+                        + ",\"occurredOn\":\"2026-06-27\"}"))
+        .andExpect(status().isCreated());
+
+    this.mockMvc
+        .perform(delete("/api/categories/" + categoryId))
+        .andExpect(status().isConflict());
   }
 
   private long idOf(String json) throws Exception {

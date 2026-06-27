@@ -5,4 +5,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 interface TransactionJpaRepository
     extends JpaRepository<TransactionJpaEntity, Long>,
-        JpaSpecificationExecutor<TransactionJpaEntity> {}
+        JpaSpecificationExecutor<TransactionJpaEntity> {
+
+  boolean existsByCategoryId(Long categoryId);
+}
