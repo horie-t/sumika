@@ -49,3 +49,41 @@ main {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 360px;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+}
+
+.transaction-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.transaction-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.field-error {
+  color: #c00;
+  font-size: 0.8rem;
+}
+
+.form-error {
+  color: #c00;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
