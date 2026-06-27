@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: sumika
+  # ローカル開発のデフォルトは docker-compose の PostgreSQL（環境変数で上書き可）
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sumika}
+    username: ${SPRING_DATASOURCE_USERNAME:sumika}
+    password: ${SPRING_DATASOURCE_PASSWORD:sumika}
+  jpa:
+    # スキーマは Flyway で管理し、Hibernate は検証のみ行う
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
