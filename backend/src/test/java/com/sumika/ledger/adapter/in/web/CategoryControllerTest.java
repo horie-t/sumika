@@ -84,7 +84,7 @@ class CategoryControllerTest {
   @Test
   void updateReturns404AsProblemDetail() throws Exception {
     when(this.manageCategoryUseCase.updateCategory(any()))
-        .thenThrow(new ResourceNotFoundException("category not found: 99"));
+        .thenThrow(new ResourceNotFoundException("カテゴリが見つかりません: 99"));
 
     this.mockMvc
         .perform(
@@ -92,6 +92,6 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"food\",\"type\":\"EXPENSE\"}"))
         .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.detail").value("category not found: 99"));
+        .andExpect(jsonPath("$.detail").value("カテゴリが見つかりません: 99"));
   }
 }

@@ -111,7 +111,7 @@ class TransactionControllerTest {
   @Test
   void registerReturns400AsProblemDetailOnTypeMismatch() throws Exception {
     when(this.registerTransactionUseCase.registerTransaction(any()))
-        .thenThrow(new IllegalArgumentException("transaction type must match category type"));
+        .thenThrow(new IllegalArgumentException("収支の種別がカテゴリの種別と一致しません"));
 
     this.mockMvc
         .perform(
@@ -121,6 +121,6 @@ class TransactionControllerTest {
                     "{\"type\":\"INCOME\",\"amount\":100,\"categoryId\":1,"
                         + "\"occurredOn\":\"2026-06-27\"}"))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.detail").value("transaction type must match category type"));
+        .andExpect(jsonPath("$.detail").value("収支の種別がカテゴリの種別と一致しません"));
   }
 }
