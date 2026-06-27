@@ -1,0 +1,24 @@
+# ローカル開発用の PostgreSQL。
+#   起動: docker compose up -d db
+#   停止: docker compose down       （データ保持）
+#   破棄: docker compose down -v     （ボリュームごと削除）
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sumika-db
+    environment:
+      POSTGRES_DB: sumika
+      POSTGRES_USER: sumika
+      POSTGRES_PASSWORD: sumika
+    ports:
+      - "5432:5432"
+    volumes:
+      - sumika-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sumika -d sumika"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sumika-db-data:
