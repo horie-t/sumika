@@ -7,10 +7,12 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.sumika.common.ResourceNotFoundException;
 import com.sumika.ledger.application.port.in.GetCategoriesQuery;
 import com.sumika.ledger.application.port.in.ManageCategoryUseCase;
 import com.sumika.ledger.domain.Category;
@@ -77,5 +79,19 @@ class CategoryControllerTest {
     this.mockMvc.perform(delete("/api/categories/5")).andExpect(status().isNoContent());
 
     verify(this.manageCategoryUseCase).deleteCategory(CategoryId.of(5));
+  }
+
+  @Test
+  void updateReturns404AsProblemDetail() throws Exception {
+    when(this.manageCategoryUseCase.updateCategory(any()))
+        .thenThrow(new ResourceNotFoundException("category not found: 99"));
+
+    this.mockMvc
+        .perform(
+            put("/api/categories/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"food\",\"type\":\"EXPENSE\"}"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.detail").value("category not found: 99"));
   }
 }

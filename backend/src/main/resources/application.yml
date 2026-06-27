@@ -13,3 +13,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  mvc:
+    # 標準例外も RFC 7807 (ProblemDetail) で返す
+    problemdetails:
+      enabled: true
