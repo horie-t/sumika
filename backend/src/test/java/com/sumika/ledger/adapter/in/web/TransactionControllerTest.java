@@ -107,4 +107,20 @@ class TransactionControllerTest {
 
     verify(this.deleteTransactionUseCase).deleteTransaction(TransactionId.of(3));
   }
+
+  @Test
+  void registerReturns400AsProblemDetailOnTypeMismatch() throws Exception {
+    when(this.registerTransactionUseCase.registerTransaction(any()))
+        .thenThrow(new IllegalArgumentException("transaction type must match category type"));
+
+    this.mockMvc
+        .perform(
+            post("/api/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"type\":\"INCOME\",\"amount\":100,\"categoryId\":1,"
+                        + "\"occurredOn\":\"2026-06-27\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("transaction type must match category type"));
+  }
 }
