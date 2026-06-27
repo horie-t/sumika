@@ -2,3 +2,5 @@ dist
 node_modules
 *.svg
 package-lock.json
+src/api/schema.d.ts
+openapi.json
