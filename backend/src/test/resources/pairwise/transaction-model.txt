@@ -1,0 +1,39 @@
+# =============================================================================
+# POST /api/transactions の入力ドメイン ペアワイズ・モデル（PICT）
+# =============================================================================
+#
+# 目的: 取引登録APIの入力組み合わせを、全因子ペアを網羅しつつ最小件数で検証する。
+#
+# 因子値は「同値クラスを表す記号値」で持つ。実際のJSON値への変換は
+# TransactionApiE2ETest 側のヘルパが行う（このモデルを仕様書として読めるようにするため）。
+#
+# 期待結果(ExpectStatus)は入力因子から下部の制約で一意に導出する。
+# これによりテストコードは「組み立てて投げ、ステータス＋必要なら本文/ProblemDetail を検証」に徹する。
+#
+# 仕様の根拠:
+#   - amount: @NotNull @Positive  → 0 と負数は 400（ZERO/NEGATIVE）
+#   - memo:   @Size(max=255)      → 256 文字は 400（OVER）。空文字は許容（ZERO）
+#   - occurredOn: LocalDate       → 解析不能な文字列は 400（MALFORMED）。将来日付は許容（FUTURE）
+#   - 種別一致: 取引 type ≠ カテゴリ type → 400（"収支の種別がカテゴリの種別と一致しません"）
+#
+# 生成コマンド（出力の安定化のためシード固定 /r:1）:
+#   pict transaction-model.txt /r:1 > transactions.csv
+# モデルと CSV は両方コミットし、ずれは PR レビューで担保する（CI で再生成はしない）。
+# =============================================================================
+
+Type:         INCOME, EXPENSE
+Amount:       POSITIVE, ZERO, NEGATIVE
+CategoryType: INCOME, EXPENSE
+OccurredOn:   VALID, FUTURE, MALFORMED
+MemoLen:      ZERO, MAX, OVER
+ExpectStatus: 201, 400
+
+# --- 期待結果の導出（異常系を 400 に固定）---
+IF [Amount]     <> "POSITIVE" THEN [ExpectStatus] = 400;
+IF [MemoLen]     = "OVER"     THEN [ExpectStatus] = 400;
+IF [OccurredOn]  = "MALFORMED" THEN [ExpectStatus] = 400;
+IF [Type]       <> [CategoryType] THEN [ExpectStatus] = 400;
+
+# --- すべて妥当なら 201 ---
+IF [Amount] = "POSITIVE" AND [MemoLen] <> "OVER" AND [OccurredOn] <> "MALFORMED"
+   AND [Type] = [CategoryType] THEN [ExpectStatus] = 201;
