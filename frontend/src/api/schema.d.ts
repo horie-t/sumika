@@ -68,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/monthly-trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["monthlyTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/monthly-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["monthlySummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -107,6 +139,32 @@ export interface components {
             name?: string;
             /** @enum {string} */
             type?: "INCOME" | "EXPENSE";
+        };
+        MonthlyTotalResponse: {
+            month?: string;
+            /** Format: int64 */
+            income?: number;
+            /** Format: int64 */
+            expense?: number;
+        };
+        CategorySummaryLineResponse: {
+            /** Format: int64 */
+            categoryId?: number;
+            categoryName?: string;
+            /** @enum {string} */
+            type?: "INCOME" | "EXPENSE";
+            /** Format: int64 */
+            total?: number;
+        };
+        MonthlySummaryResponse: {
+            month?: string;
+            /** Format: int64 */
+            totalIncome?: number;
+            /** Format: int64 */
+            totalExpense?: number;
+            /** Format: int64 */
+            net?: number;
+            categories?: components["schemas"]["CategorySummaryLineResponse"][];
         };
     };
     responses: never;
@@ -297,6 +355,51 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CategoryResponse"];
+                };
+            };
+        };
+    };
+    monthlyTrend: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyTotalResponse"][];
+                };
+            };
+        };
+    };
+    monthlySummary: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlySummaryResponse"];
                 };
             };
         };

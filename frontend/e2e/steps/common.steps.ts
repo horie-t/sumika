@@ -13,6 +13,33 @@ When(/^カテゴリ管理を開く$/, async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'カテゴリ管理' })).toBeVisible()
 })
 
+When(/^集計・レポートを開く$/, async ({ page }) => {
+  await page.goto('/reports')
+  await expect(page.getByRole('heading', { name: '集計・レポート' })).toBeVisible()
+})
+
+// ===== 集計・レポート =====
+
+When(/^対象月に "(.+)" を選ぶ$/, async ({ page }, month: string) => {
+  await page.getByLabel('対象月').fill(month)
+})
+
+Then(/^収入の合計に "(.+)" が表示される$/, async ({ page }, value: string) => {
+  await expect(page.locator('.summary-card.income')).toContainText(value)
+})
+
+Then(/^支出の合計に "(.+)" が表示される$/, async ({ page }, value: string) => {
+  await expect(page.locator('.summary-card.expense')).toContainText(value)
+})
+
+Then(/^差引に "(.+)" が表示される$/, async ({ page }, value: string) => {
+  await expect(page.locator('.summary-card.net')).toContainText(value)
+})
+
+Then(/^カテゴリ別内訳に "(.+)" の行が表示される$/, async ({ page }, name: string) => {
+  await expect(page.locator('.data-table tbody tr', { hasText: name })).toBeVisible()
+})
+
 // ===== ボタン操作 =====
 
 // 単一ボタン（新規登録/新規追加/登録/更新/追加/キャンセル 等）。
