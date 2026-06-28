@@ -1,5 +1,6 @@
 package com.sumika.ledger;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sumika.TestcontainersConfiguration;
+import com.sumika.support.MockJwtDecoderConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,11 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
  * HTTP からの 登録→取得→更新→削除 を実 PostgreSQL に対して通す E2E。
  *
  * <p>各テストは {@link Transactional} でロールバックして分離する（MockMvc は同一スレッドで
- * 実行されるためテストのトランザクションに参加する）。
+ * 実行されるためテストのトランザクションに参加する）。認証は {@code jwt()} で注入し、
+ * JWT デコードは {@link MockJwtDecoderConfiguration} のモックで代替する（Keycloak 不要）。
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, MockJwtDecoderConfiguration.class})
 @Transactional
 class LedgerE2ETest {
 
@@ -40,6 +43,7 @@ class LedgerE2ETest {
             this.mockMvc
                 .perform(
                     post("/api/categories")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"food\",\"type\":\"EXPENSE\"}"))
                 .andExpect(status().isCreated())
@@ -52,6 +56,7 @@ class LedgerE2ETest {
             this.mockMvc
                 .perform(
                     post("/api/transactions")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             "{\"type\":\"EXPENSE\",\"amount\":1200,\"categoryId\":"
@@ -64,7 +69,7 @@ class LedgerE2ETest {
                 .getContentAsString());
 
     this.mockMvc
-        .perform(get("/api/transactions"))
+        .perform(get("/api/transactions").with(jwt()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value((int) transactionId))
         .andExpect(jsonPath("$[0].memo").value("lunch"));
@@ -72,6 +77,7 @@ class LedgerE2ETest {
     this.mockMvc
         .perform(
             put("/api/transactions/" + transactionId)
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"type\":\"EXPENSE\",\"amount\":2000,\"categoryId\":"
@@ -82,11 +88,11 @@ class LedgerE2ETest {
         .andExpect(jsonPath("$.memo").value("dinner"));
 
     this.mockMvc
-        .perform(delete("/api/transactions/" + transactionId))
+        .perform(delete("/api/transactions/" + transactionId).with(jwt()))
         .andExpect(status().isNoContent());
 
     this.mockMvc
-        .perform(get("/api/transactions"))
+        .perform(get("/api/transactions").with(jwt()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
   }
@@ -98,6 +104,7 @@ class LedgerE2ETest {
             this.mockMvc
                 .perform(
                     post("/api/categories")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"utility\",\"type\":\"EXPENSE\"}"))
                 .andExpect(status().isCreated())
@@ -108,6 +115,7 @@ class LedgerE2ETest {
     this.mockMvc
         .perform(
             post("/api/transactions")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"type\":\"EXPENSE\",\"amount\":500,\"categoryId\":"
@@ -116,7 +124,7 @@ class LedgerE2ETest {
         .andExpect(status().isCreated());
 
     this.mockMvc
-        .perform(delete("/api/categories/" + categoryId))
+        .perform(delete("/api/categories/" + categoryId).with(jwt()))
         .andExpect(status().isConflict());
   }
 

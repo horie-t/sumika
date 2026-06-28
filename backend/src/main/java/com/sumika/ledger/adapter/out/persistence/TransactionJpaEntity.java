@@ -23,6 +23,9 @@ class TransactionJpaEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "user_id", nullable = false, length = 64)
+  private String userId;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   private EntryType type;
@@ -52,8 +55,15 @@ class TransactionJpaEntity {
   }
 
   TransactionJpaEntity(
-      Long id, EntryType type, Long amount, Long categoryId, LocalDate occurredOn, String memo) {
+      Long id,
+      String userId,
+      EntryType type,
+      Long amount,
+      Long categoryId,
+      LocalDate occurredOn,
+      String memo) {
     this.id = id;
+    this.userId = userId;
     this.type = type;
     this.amount = amount;
     this.categoryId = categoryId;
@@ -63,6 +73,10 @@ class TransactionJpaEntity {
 
   Long getId() {
     return this.id;
+  }
+
+  String getUserId() {
+    return this.userId;
   }
 
   EntryType getType() {

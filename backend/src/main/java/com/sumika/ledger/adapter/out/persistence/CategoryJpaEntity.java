@@ -21,6 +21,9 @@ class CategoryJpaEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "user_id", nullable = false, length = 64)
+  private String userId;
+
   @Column(nullable = false, length = 50)
   private String name;
 
@@ -36,14 +39,19 @@ class CategoryJpaEntity {
     // for JPA
   }
 
-  CategoryJpaEntity(Long id, String name, EntryType type) {
+  CategoryJpaEntity(Long id, String userId, String name, EntryType type) {
     this.id = id;
+    this.userId = userId;
     this.name = name;
     this.type = type;
   }
 
   Long getId() {
     return this.id;
+  }
+
+  String getUserId() {
+    return this.userId;
   }
 
   String getName() {

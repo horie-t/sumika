@@ -32,6 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
@@ -44,8 +45,20 @@ dependencies {
 	testImplementation("org.testcontainers:testcontainers-postgresql")
 	testImplementation("io.rest-assured:rest-assured:5.5.1")
 	testImplementation("io.rest-assured:json-path:5.5.1")
+	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("com.github.dasniko:testcontainers-keycloak:3.7.0")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.4.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+// 認証つき E2E（Testcontainers Keycloak）が realm をインポートできるよう、コミット済みの
+// realm JSON（リポジトリ直下 keycloak/）をテストのクラスパスに載せる（単一の真実を共有）。
+sourceSets {
+	test {
+		resources {
+			srcDir("../keycloak")
+		}
+	}
 }
 
 tasks.withType<Test> {
