@@ -21,8 +21,11 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_managed" {
 
 data "aws_iam_policy_document" "ecs_execution_secrets" {
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_rds_cluster.this.master_user_secret[0].secret_arn]
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_rds_cluster.this.master_user_secret[0].secret_arn,
+      aws_secretsmanager_secret.keycloak_admin.arn
+    ]
   }
   statement {
     # RDS マネージドシークレットは aws/secretsmanager KMS で暗号化（PoC: * に許可）

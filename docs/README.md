@@ -48,11 +48,12 @@ docker compose up -d db keycloak   # DB と認証サーバーを起動
 - frontend は keycloak-js でログインし、アクセストークンを `Authorization: Bearer` で送る。
 - 8081 は backend(8080) との衝突回避。realm/ユーザーはコミット済み JSON 由来なので再現可能。
 
-### 本番（AWS）方針メモ（M4 では未実装）
+### 本番（AWS）
 
-PoC（M5）は ECS/Aurora/S3+CloudFront 構成。本番の Keycloak は (a) ECS へ自前ホスト（専用 RDS スキーマ・SG 追加）、
-または (b) マネージド（AWS Cognito 等）への置き換えが候補。いずれも backend には issuer-uri を環境変数で渡すだけで接続できる。
-具体化は後続マイルストーンで扱う。
+Keycloak を **ECS Fargate に自前ホスト**して配備済み（M7）。同一 Aurora 内の専用 `keycloak` DB を使い、
+CloudFront の `/auth/*` 経由で公開（issuer = `https://<cloudfrontドメイン>/auth/realms/sumika`）。
+backend は `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` で同 issuer を検証する。
+手順・構成は [docs/deploy.md](deploy.md) を参照。
 
 ## フロントエンド
 

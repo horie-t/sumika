@@ -32,11 +32,11 @@ resource "aws_security_group" "aurora" {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description     = "Postgres from ECS"
+    description     = "Postgres from ECS (backend / keycloak)"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
+    security_groups = [aws_security_group.ecs.id, aws_security_group.keycloak.id]
   }
 
   egress {

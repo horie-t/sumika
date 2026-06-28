@@ -1,8 +1,9 @@
 # これをコピーして terraform.tfvars を作成し、自分の値を設定する。
 # route53_zone_id と api_hostname は必須（既存ゾーン）。
 
-route53_zone_id = "Z0123456789ABCDEFGHIJ"
-api_hostname    = "api-poc.example.com"
+route53_zone_id   = "Z0123456789ABCDEFGHIJ"
+api_hostname      = "api-poc.example.com"
+keycloak_hostname = "auth-poc.example.com"
 
 # 任意（既定あり）
 # region          = "ap-northeast-1"

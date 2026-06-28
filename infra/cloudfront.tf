@@ -35,8 +35,9 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
 }
 
 locals {
-  s3_origin_id  = "s3-frontend"
-  api_origin_id = "api-backend"
+  s3_origin_id       = "s3-frontend"
+  api_origin_id      = "api-backend"
+  keycloak_origin_id = "keycloak-auth"
 }
 
 resource "aws_cloudfront_distribution" "this" {
@@ -64,6 +65,18 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  # Keycloak（Route53 ホスト名 → ECS タスク, HTTP:8080, ALB なし）
+  origin {
+    origin_id   = local.keycloak_origin_id
+    domain_name = var.keycloak_hostname
+    custom_origin_config {
+      http_port              = 8080
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   default_cache_behavior {
     target_origin_id       = local.s3_origin_id
     viewer_protocol_policy = "redirect-to-https"
@@ -75,6 +88,17 @@ resource "aws_cloudfront_distribution" "this" {
   ordered_cache_behavior {
     path_pattern             = "/api/*"
     target_origin_id         = local.api_origin_id
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+  }
+
+  # Keycloak（/auth/* → ECS Keycloak。issuer = https://<this>/auth/realms/sumika）
+  ordered_cache_behavior {
+    path_pattern             = "/auth/*"
+    target_origin_id         = local.keycloak_origin_id
     viewer_protocol_policy   = "redirect-to-https"
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD"]

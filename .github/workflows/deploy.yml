@@ -7,6 +7,8 @@ name: deploy
 # 必要な Actions variables（terraform output から設定）:
 #   DEPLOY_ENABLED, AWS_REGION, AWS_DEPLOY_ROLE_ARN, ECR_REPOSITORY,
 #   ECS_CLUSTER, ECS_SERVICE, FRONTEND_BUCKET, CLOUDFRONT_DISTRIBUTION_ID
+#   KEYCLOAK_ECR_REPOSITORY, KEYCLOAK_ECS_SERVICE
+#   VITE_KEYCLOAK_URL(=https://<cf>/auth), VITE_KEYCLOAK_REALM(=sumika), VITE_KEYCLOAK_CLIENT_ID(=sumika-frontend)
 
 on:
   push:
@@ -40,6 +42,28 @@ jobs:
             --service "${{ vars.ECS_SERVICE }}" \
             --force-new-deployment
 
+  keycloak:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push image
+        run: |
+          docker build -t "${{ vars.KEYCLOAK_ECR_REPOSITORY }}:latest" -t "${{ vars.KEYCLOAK_ECR_REPOSITORY }}:${{ github.sha }}" keycloak
+          docker push "${{ vars.KEYCLOAK_ECR_REPOSITORY }}:latest"
+          docker push "${{ vars.KEYCLOAK_ECR_REPOSITORY }}:${{ github.sha }}"
+      - name: Trigger ECS rollout
+        run: |
+          aws ecs update-service \
+            --cluster "${{ vars.ECS_CLUSTER }}" \
+            --service "${{ vars.KEYCLOAK_ECS_SERVICE }}" \
+            --force-new-deployment
+
   frontend:
     if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
@@ -52,6 +76,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm install -g npm@11
       - working-directory: frontend
+        env:
+          # Keycloak 接続先をビルド時に注入（SPA は import.meta.env から読む）
+          VITE_KEYCLOAK_URL: ${{ vars.VITE_KEYCLOAK_URL }}
+          VITE_KEYCLOAK_REALM: ${{ vars.VITE_KEYCLOAK_REALM }}
+          VITE_KEYCLOAK_CLIENT_ID: ${{ vars.VITE_KEYCLOAK_CLIENT_ID }}
         run: |
           npm ci
           npm run build
