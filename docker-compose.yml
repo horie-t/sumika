@@ -1,5 +1,6 @@
-# ローカル開発用の PostgreSQL。
-#   起動: docker compose up -d db
+# ローカル開発用のミドルウェア（PostgreSQL + Keycloak）。
+#   DB のみ:        docker compose up -d db
+#   認証込み一式:   docker compose up -d db keycloak
 #   停止: docker compose down       （データ保持）
 #   破棄: docker compose down -v     （ボリュームごと削除）
 services:
@@ -19,6 +20,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # 認証サーバー（OIDC）。dev モードで起動し、起動時に realm をインポートする。
+  # ホスト 8081（backend の 8080 と衝突回避）。issuer = http://localhost:8081/realms/sumika
+  # 管理コンソール: http://localhost:8081/ （admin/admin）。デモユーザー: demo / demo
+  # 初回はイメージ取得＋realm インポートで起動に数十秒かかる。
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: sumika-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: "8080"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./keycloak/realm-sumika.json:/opt/keycloak/data/import/realm-sumika.json:ro
 
 volumes:
   sumika-db-data:
