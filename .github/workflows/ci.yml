@@ -62,19 +62,75 @@ jobs:
       - run: npm run build
       - run: npm test --if-present
 
-  # 常に実行される唯一の必須チェック。backend/frontend が success または skipped なら成功。
+  # ブラウザ E2E（Playwright + playwright-bdd）。フルスタック（Postgres + backend + frontend）を起動して実行。
+  # フロント・バックエンドのどちらの変更でも実行する。
+  e2e:
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: sumika
+          POSTGRES_USER: sumika
+          POSTGRES_PASSWORD: sumika
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sumika -d sumika"
+          --health-interval 5s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      # backend を起動（datasource 既定が localhost:5432/sumika と一致するため上書き不要。Flyway がスキーマ作成）。
+      - name: Start backend
+        working-directory: backend
+        run: ./gradlew bootRun > backend.log 2>&1 &
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install -g npm@11
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Wait for backend
+        run: npx --yes wait-on -t 120000 http://localhost:8080/v3/api-docs
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E
+        working-directory: frontend
+        run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
+
+  # 常に実行される唯一の必須チェック。backend/frontend/e2e が success または skipped なら成功。
   ci-success:
-    needs: [backend, frontend]
+    needs: [backend, frontend, e2e]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check results
         run: |
-          echo "backend=${{ needs.backend.result }} frontend=${{ needs.frontend.result }}"
+          echo "backend=${{ needs.backend.result }} frontend=${{ needs.frontend.result }} e2e=${{ needs.e2e.result }}"
           if [[ "${{ needs.backend.result }}" == "failure" || "${{ needs.backend.result }}" == "cancelled" ]]; then
             echo "backend job failed"; exit 1
           fi
           if [[ "${{ needs.frontend.result }}" == "failure" || "${{ needs.frontend.result }}" == "cancelled" ]]; then
             echo "frontend job failed"; exit 1
+          fi
+          if [[ "${{ needs.e2e.result }}" == "failure" || "${{ needs.e2e.result }}" == "cancelled" ]]; then
+            echo "e2e job failed"; exit 1
           fi
           echo "all required jobs passed (or were skipped)"
