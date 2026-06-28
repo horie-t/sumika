@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `sumika` is a household-budget / personal-finance management SaaS (家計簿管理のSaaSサービス).
 Monorepo: `backend/` (Spring Boot API) + `frontend/` (React SPA). Tasks are tracked as GitHub
-Issues/milestones (M0 基盤整備 → M1 backend CRUD → M2 frontend UI). License: BSD 3-Clause.
+Issues/milestones (M0 基盤整備 → M1 backend CRUD → M2 frontend UI → M3 集計・レポート). License: BSD 3-Clause.
 
-MVP scope is income/expense records (収支記録) CRUD. **Auth is intentionally deferred** — the app
-is single-user for now, but DB tables are designed so a `user_id` column can be added later.
+MVP scope is income/expense records (収支記録) CRUD + category management; beyond that the app
+provides monthly reporting (集計・レポート: summary / per-category / trend) via read-only
+`/api/reports` aggregation endpoints. **Auth is intentionally deferred** — the app is single-user
+for now, but DB tables are designed so a `user_id` column can be added later.
 
 ## Commands
 
@@ -91,7 +93,9 @@ to the backend on `:8080` (same-origin, no CORS), overridable via `VITE_API_BASE
 generated from the backend's OpenAPI (`openapi.json` → `src/api/schema.d.ts` via `npm run gen:api`).
 Providers (`ErrorBoundary` / `QueryClientProvider` / `ToastProvider` / `BrowserRouter`) are wired in
 `src/main.tsx`. Directory policy: `api/` (client, types, hooks), `features/` (feature modules with
-their screens), `components/` (shared UI).
+their screens — `transactions`, `categories`, `reports`), `components/` (shared UI). The `reports/`
+feature renders monthly summary / per-category breakdown / trend (backed by `/api/reports`) and
+draws charts with **recharts**.
 
 Tests: **Vitest + React Testing Library** for units (scoped to `src/`), and **browser E2E** in
 `e2e/` driven by **Playwright + playwright-bdd** — specs are **Japanese Gherkin** (`# language: ja`
