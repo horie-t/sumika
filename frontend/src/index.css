@@ -145,3 +145,53 @@ main {
 .toast-error {
   background: #c62828;
 }
+
+/* ===== 集計・レポート ===== */
+.report-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  flex: 1 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+}
+
+.summary-card .summary-label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.summary-card .summary-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card.income {
+  border-left: 4px solid #3ba272;
+}
+
+.summary-card.expense {
+  border-left: 4px solid #ee6666;
+}
+
+.summary-card.net {
+  border-left: 4px solid #5470c6;
+}
+
+.report-section {
+  margin-bottom: 2rem;
+}
+
+.chart-container {
+  width: 100%;
+  margin-bottom: 1rem;
+}

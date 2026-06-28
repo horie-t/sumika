@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as categoriesApi from './categories'
+import * as reportsApi from './reports'
 import * as transactionsApi from './transactions'
 import type { TransactionFilter } from './transactions'
 import type { CategoryInput, TransactionInput } from './types'
@@ -8,6 +9,10 @@ export const queryKeys = {
   categories: ['categories'] as const,
   transactions: ['transactions'] as const,
   transactionList: (filter: TransactionFilter) => ['transactions', filter] as const,
+  reports: {
+    summary: (month: string) => ['reports', 'summary', month] as const,
+    trend: (from: string, to: string) => ['reports', 'trend', from, to] as const,
+  },
 }
 
 // ---- categories ----
@@ -75,5 +80,21 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: (id: number) => transactionsApi.deleteTransaction(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transactions }),
+  })
+}
+
+// ---- reports ----
+
+export function useMonthlySummary(month: string) {
+  return useQuery({
+    queryKey: queryKeys.reports.summary(month),
+    queryFn: () => reportsApi.fetchMonthlySummary(month),
+  })
+}
+
+export function useMonthlyTrend(from: string, to: string) {
+  return useQuery({
+    queryKey: queryKeys.reports.trend(from, to),
+    queryFn: () => reportsApi.fetchMonthlyTrend(from, to),
   })
 }
