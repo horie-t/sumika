@@ -72,8 +72,19 @@ gh variable set DEPLOY_ENABLED --body true
 - realm `sumika` をイメージに同梱し起動時インポート。デモユーザー `demo`/`demo` は **PoC 用**（本番運用では
   realm export を見直し、デモユーザーは削除すること）。
 - realm の redirect/webOrigins は起動時に `SUMIKA_FRONTEND_URL`（CloudFront URL）へ書き換える。
-- 管理者は `admin` / Secrets Manager（`<project>-keycloak-admin`、Terraform 生成のランダム値）。
 - Keycloak も夜間停止対象（22時停止/9時起動）。停止中は認証不可（backend も停止中のため許容）。
+
+#### 管理コンソール
+- **URL**: `https://<cloudfront_domain>/auth/admin/`（`/auth` 配下に公開。例: `https://d1c5cutiypr5nj.cloudfront.net/auth/admin/`）
+- **ユーザー名**: `admin`（master realm）
+- **パスワード**: Secrets Manager の `<project>-keycloak-admin`（例 `sumika-poc-keycloak-admin`、Terraform 生成のランダム値）。
+  取得コマンド:
+  ```bash
+  aws secretsmanager get-secret-value --secret-id sumika-poc-keycloak-admin \
+    --query SecretString --output text
+  ```
+- 実利用前の作業: 管理コンソールで realm `sumika` に切替え → 実ユーザーを作成 → デモユーザー `demo` を Disabled（または削除）。
+  （アプリ利用者向けログインは管理コンソールとは別で、トップ `https://<cloudfront_domain>/` を開くと `sumika` realm のログインへリダイレクトされる。）
 
 ## 4. 動作確認
 `terraform output cloudfront_domain` の URL を開く。`/` で SPA、`/api/...` で API。
