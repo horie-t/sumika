@@ -33,7 +33,9 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "SPRING_DATASOURCE_URL", value = "jdbc:postgresql://${aws_rds_cluster.this.endpoint}:5432/${var.db_name}" },
         { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
         { name = "ROUTE53_HOSTED_ZONE_ID", value = var.route53_zone_id },
-        { name = "API_HOSTNAME", value = var.api_hostname }
+        { name = "API_HOSTNAME", value = var.api_hostname },
+        # 認証: Keycloak の issuer（CloudFront /auth 経由）。未設定だと既定 localhost で JWKS 取得に失敗し起動不可。
+        { name = "SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", value = "https://${aws_cloudfront_distribution.this.domain_name}/auth/realms/sumika" }
       ]
       secrets = [
         { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = "${aws_rds_cluster.this.master_user_secret[0].secret_arn}:password::" }
