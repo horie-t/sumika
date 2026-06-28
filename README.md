@@ -33,6 +33,20 @@ cd frontend && npm install && npm run dev
 - タスクは GitHub Issue / マイルストーン（M0 基盤整備 → M1 backend CRUD → M2 frontend UI）で管理。
 - 1 Issue = 1 PR。詳細なコマンド・アーキテクチャは各ディレクトリの README と `CLAUDE.md` を参照。
 
+## テスト
+
+- **backend（単体・結合・API E2E）**: `cd backend && ./gradlew test`。Testcontainers で実 PostgreSQL を使用。API E2E は REST Assured + PICT ペアワイズ。
+- **frontend 単体**: `cd frontend && npm test`（Vitest）。
+- **ブラウザ E2E（Playwright + playwright-bdd / 日本語 Gherkin）**: フルスタックを起動して実行する。
+
+  ```bash
+  docker compose up -d db                      # 1. DB
+  cd backend && ./gradlew bootRun              # 2. backend(:8080)
+  cd frontend && npm install && npm run e2e    # 3. E2E（Vite は Playwright が自動起動）
+  ```
+
+  詳細・補助コマンド・環境変数は [frontend/README.md の「ブラウザ E2E テスト」](frontend/README.md#ブラウザ-e2e-テストplaywright--playwright-bdd) を参照。
+
 ## デプロイ（AWS / PoC）
 
 ECS Fargate Spot + S3/CloudFront + Aurora Serverless v2 を Terraform / GitHub Actions(OIDC) で。

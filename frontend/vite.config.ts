@@ -17,5 +17,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // Vitest（単体）は src 配下のみ。Playwright E2E（e2e/ と生成物 .features-gen/）は対象外。
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['node_modules', 'dist', 'e2e', '.features-gen'],
   },
 })
