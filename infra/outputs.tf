@@ -15,6 +15,24 @@ output "ecr_repository_url" {
   value = aws_ecr_repository.backend.repository_url
 }
 
+output "keycloak_ecr_repository_url" {
+  value = aws_ecr_repository.keycloak.repository_url
+}
+
+output "keycloak_hostname" {
+  value       = var.keycloak_hostname
+  description = "Keycloak オリジンの FQDN（Keycloak タスクが起動時に UPSERT する先）"
+}
+
+output "keycloak_ecs_service" {
+  value = aws_ecs_service.keycloak.name
+}
+
+output "keycloak_issuer_url" {
+  value       = "https://${aws_cloudfront_distribution.this.domain_name}/auth/realms/sumika"
+  description = "backend の issuer-uri / SPA の VITE_KEYCLOAK_URL(=…/auth) に用いる"
+}
+
 output "ecs_cluster" {
   value = aws_ecs_cluster.this.name
 }

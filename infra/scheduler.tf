@@ -18,7 +18,7 @@ resource "aws_iam_role" "scheduler" {
 data "aws_iam_policy_document" "scheduler" {
   statement {
     actions   = ["ecs:UpdateService"]
-    resources = [aws_ecs_service.backend.id]
+    resources = [aws_ecs_service.backend.id, aws_ecs_service.keycloak.id]
   }
 }
 
@@ -59,6 +59,43 @@ resource "aws_scheduler_schedule" "start" {
     input = jsonencode({
       Cluster      = aws_ecs_cluster.this.name
       Service      = aws_ecs_service.backend.name
+      DesiredCount = 1
+    })
+  }
+}
+
+# Keycloak も同じ時刻で停止/起動（コスト最小）
+resource "aws_scheduler_schedule" "keycloak_stop" {
+  name                         = "${var.project}-keycloak-stop"
+  schedule_expression          = var.stop_cron
+  schedule_expression_timezone = var.schedule_timezone
+  flexible_time_window {
+    mode = "OFF"
+  }
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:ecs:updateService"
+    role_arn = aws_iam_role.scheduler.arn
+    input = jsonencode({
+      Cluster      = aws_ecs_cluster.this.name
+      Service      = aws_ecs_service.keycloak.name
+      DesiredCount = 0
+    })
+  }
+}
+
+resource "aws_scheduler_schedule" "keycloak_start" {
+  name                         = "${var.project}-keycloak-start"
+  schedule_expression          = var.start_cron
+  schedule_expression_timezone = var.schedule_timezone
+  flexible_time_window {
+    mode = "OFF"
+  }
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:ecs:updateService"
+    role_arn = aws_iam_role.scheduler.arn
+    input = jsonencode({
+      Cluster      = aws_ecs_cluster.this.name
+      Service      = aws_ecs_service.keycloak.name
       DesiredCount = 1
     })
   }

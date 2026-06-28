@@ -16,6 +16,9 @@ resource "aws_rds_cluster" "this" {
   db_subnet_group_name   = aws_db_subnet_group.aurora.name
   vpc_security_group_ids = [aws_security_group.aurora.id]
 
+  # Keycloak 専用 DB を Terraform から作成するため RDS Data API を有効化（keycloak.tf の null_resource が利用）
+  enable_http_endpoint = true
+
   serverlessv2_scaling_configuration {
     min_capacity = var.aurora_min_acu
     max_capacity = var.aurora_max_acu

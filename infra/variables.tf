@@ -77,3 +77,26 @@ variable "log_retention_days" {
   type    = number
   default = 7
 }
+
+# ---- Keycloak（自前ホスト） ----
+variable "keycloak_hostname" {
+  type        = string
+  description = "Keycloak オリジンの FQDN（例: auth-poc.example.com）。CloudFront /auth/* のオリジン兼 Keycloak タスクが起動時に UPSERT する先"
+}
+
+variable "keycloak_db_name" {
+  type        = string
+  default     = "keycloak"
+  description = "同一 Aurora クラスタ内に作成する Keycloak 専用データベース名"
+}
+
+variable "keycloak_image_tag" {
+  type        = string
+  default     = "latest"
+  description = "ECS タスクが参照する keycloak イメージタグ（CD が git sha で上書き）"
+}
+
+variable "keycloak_admin_username" {
+  type    = string
+  default = "admin"
+}
