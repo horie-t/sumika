@@ -147,7 +147,7 @@ export function TransactionForm({ categories, initial, submitting, onSubmit, onC
       </div>
 
       <div className="form-actions">
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="primary" disabled={submitting}>
           {initial ? '更新' : '登録'}
         </button>
         <button type="button" onClick={onCancel} disabled={submitting}>

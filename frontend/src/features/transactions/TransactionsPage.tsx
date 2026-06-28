@@ -96,7 +96,12 @@ export default function TransactionsPage() {
 
   return (
     <main>
-      <h1>収支一覧</h1>
+      <h1>
+        <span className="deco" aria-hidden="true">
+          📒
+        </span>
+        収支一覧
+      </h1>
 
       {formOpen ? (
         <TransactionForm
@@ -107,7 +112,7 @@ export default function TransactionsPage() {
           onCancel={closeForm}
         />
       ) : (
-        <button type="button" onClick={openCreate}>
+        <button type="button" className="primary" onClick={openCreate}>
           新規登録
         </button>
       )}
@@ -125,37 +130,47 @@ export default function TransactionsPage() {
       ) : transactionsQuery.data.length === 0 ? (
         <p>データがありません</p>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>日付</th>
-              <th>カテゴリ</th>
-              <th>種別</th>
-              <th className="amount">金額</th>
-              <th>メモ</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactionsQuery.data.map((t) => (
-              <tr key={t.id}>
-                <td>{t.occurredOn}</td>
-                <td>{categoryName(t.categoryId)}</td>
-                <td>{t.type === 'INCOME' ? '収入' : '支出'}</td>
-                <td className="amount">{yen.format(t.amount ?? 0)}</td>
-                <td>{t.memo ?? ''}</td>
-                <td>
-                  <button type="button" onClick={() => openEdit(t)}>
-                    編集
-                  </button>
-                  <button type="button" onClick={() => handleDelete(t)}>
-                    削除
-                  </button>
-                </td>
+        <div className="table-card">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>カテゴリ</th>
+                <th>種別</th>
+                <th className="amount">金額</th>
+                <th>メモ</th>
+                <th>操作</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {transactionsQuery.data.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.occurredOn}</td>
+                  <td>{categoryName(t.categoryId)}</td>
+                  <td>
+                    <span className={`badge ${t.type === 'INCOME' ? 'income' : 'expense'}`}>
+                      {t.type === 'INCOME' ? '収入' : '支出'}
+                    </span>
+                  </td>
+                  <td className={`amount ${t.type === 'INCOME' ? 'pos' : 'neg'}`}>
+                    {yen.format(t.amount ?? 0)}
+                  </td>
+                  <td>{t.memo ?? ''}</td>
+                  <td>
+                    <span className="row-actions">
+                      <button type="button" onClick={() => openEdit(t)}>
+                        編集
+                      </button>
+                      <button type="button" className="danger" onClick={() => handleDelete(t)}>
+                        削除
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   )

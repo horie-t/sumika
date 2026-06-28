@@ -56,7 +56,7 @@ export function CategoryForm({ initial, submitting, onSubmit, onCancel }: Props)
       </div>
 
       <div className="form-actions">
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="primary" disabled={submitting}>
           {initial ? '更新' : '追加'}
         </button>
         <button type="button" onClick={onCancel} disabled={submitting}>
