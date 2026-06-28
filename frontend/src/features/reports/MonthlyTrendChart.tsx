@@ -28,8 +28,8 @@ export function MonthlyTrendChart({ data }: Props) {
             <YAxis width={80} tickFormatter={(v) => yen.format(Number(v))} />
             <Tooltip formatter={(value) => yen.format(Number(value))} />
             <Legend />
-            <Bar dataKey="income" name="収入" fill="#3ba272" />
-            <Bar dataKey="expense" name="支出" fill="#ee6666" />
+            <Bar dataKey="income" name="収入" fill="#4fb286" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="expense" name="支出" fill="#f0876a" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

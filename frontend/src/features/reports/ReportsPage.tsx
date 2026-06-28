@@ -16,7 +16,12 @@ export default function ReportsPage() {
 
   return (
     <main>
-      <h1>集計・レポート</h1>
+      <h1>
+        <span className="deco" aria-hidden="true">
+          📊
+        </span>
+        集計・レポート
+      </h1>
 
       <div className="filters">
         <label>

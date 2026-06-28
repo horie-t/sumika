@@ -6,8 +6,8 @@ interface Props {
   categories: CategorySummaryLine[]
 }
 
-// 支出カテゴリ用の配色（必要数を循環）。
-const COLORS = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452']
+// 支出カテゴリ用の配色（Warm Kakeibo パレット、必要数を循環）。
+const COLORS = ['#ff8a7a', '#4fb286', '#ffc466', '#7cc6e8', '#c8a8e0', '#f6a5b8', '#9ad0a5']
 
 /** カテゴリ別内訳の表＋支出の円グラフ。 */
 export function CategoryBreakdown({ categories }: Props) {
@@ -49,8 +49,14 @@ export function CategoryBreakdown({ categories }: Props) {
               {categories.map((c) => (
                 <tr key={c.categoryId}>
                   <td>{c.categoryName}</td>
-                  <td>{c.type === 'INCOME' ? '収入' : '支出'}</td>
-                  <td className="amount">{yen.format(c.total)}</td>
+                  <td>
+                    <span className={`badge ${c.type === 'INCOME' ? 'income' : 'expense'}`}>
+                      {c.type === 'INCOME' ? '収入' : '支出'}
+                    </span>
+                  </td>
+                  <td className={`amount ${c.type === 'INCOME' ? 'pos' : 'neg'}`}>
+                    {yen.format(c.total)}
+                  </td>
                 </tr>
               ))}
             </tbody>

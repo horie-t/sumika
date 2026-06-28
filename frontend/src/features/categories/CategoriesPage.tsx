@@ -72,7 +72,12 @@ export default function CategoriesPage() {
 
   return (
     <main>
-      <h1>カテゴリ管理</h1>
+      <h1>
+        <span className="deco" aria-hidden="true">
+          🏷️
+        </span>
+        カテゴリ管理
+      </h1>
 
       {formOpen ? (
         <CategoryForm
@@ -82,7 +87,7 @@ export default function CategoriesPage() {
           onCancel={closeForm}
         />
       ) : (
-        <button type="button" onClick={openCreate}>
+        <button type="button" className="primary" onClick={openCreate}>
           新規追加
         </button>
       )}
@@ -94,31 +99,43 @@ export default function CategoriesPage() {
       ) : categoriesQuery.data.length === 0 ? (
         <p>カテゴリがありません</p>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>名前</th>
-              <th>種別</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categoriesQuery.data.map((category) => (
-              <tr key={category.id}>
-                <td>{category.name}</td>
-                <td>{category.type === 'INCOME' ? '収入' : '支出'}</td>
-                <td>
-                  <button type="button" onClick={() => openEdit(category)}>
-                    編集
-                  </button>
-                  <button type="button" onClick={() => handleDelete(category)}>
-                    削除
-                  </button>
-                </td>
+        <div className="table-card">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>種別</th>
+                <th>操作</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {categoriesQuery.data.map((category) => (
+                <tr key={category.id}>
+                  <td>{category.name}</td>
+                  <td>
+                    <span className={`badge ${category.type === 'INCOME' ? 'income' : 'expense'}`}>
+                      {category.type === 'INCOME' ? '収入' : '支出'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="row-actions">
+                      <button type="button" onClick={() => openEdit(category)}>
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        className="danger"
+                        onClick={() => handleDelete(category)}
+                      >
+                        削除
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   )

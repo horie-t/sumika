@@ -9,10 +9,34 @@ function App() {
   return (
     <>
       <nav className="nav">
-        <NavLink to="/">収支一覧</NavLink>
-        <NavLink to="/categories">カテゴリ管理</NavLink>
-        <NavLink to="/reports">集計・レポート</NavLink>
+        <span className="brand">
+          <span className="brand-logo" aria-hidden="true">
+            🏠
+          </span>
+          sumika
+        </span>
+        <NavLink to="/">
+          <span className="deco" aria-hidden="true">
+            📒
+          </span>
+          収支一覧
+        </NavLink>
+        <NavLink to="/categories">
+          <span className="deco" aria-hidden="true">
+            🏷️
+          </span>
+          カテゴリ管理
+        </NavLink>
+        <NavLink to="/reports">
+          <span className="deco" aria-hidden="true">
+            📊
+          </span>
+          集計・レポート
+        </NavLink>
         <span className="nav-user">
+          <span className="avatar" aria-hidden="true">
+            🐥
+          </span>
           {username}
           <button type="button" onClick={logout}>
             ログアウト
