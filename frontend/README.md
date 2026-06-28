@@ -6,6 +6,7 @@ React + Vite + TypeScript で実装する Web フロントエンド。
 - サーバー状態: TanStack Query
 - HTTP: axios（`src/api/client.ts` の共有インスタンス）
 - 型: OpenAPI から自動生成（`src/api/schema.d.ts`）
+- グラフ: recharts（集計・レポート画面）
 - Lint: oxlint / Format: Prettier
 - Test: Vitest + React Testing Library（単体）/ Playwright + playwright-bdd（ブラウザ E2E）
 
@@ -88,7 +89,7 @@ API の型は backend の `/v3/api-docs` を `openapi.json` に保存し、`npm 
 ```
 src/
   api/         # axios クライアント・型(schema.d.ts/types.ts)・TanStack Query フック
-  features/    # 機能単位のモジュール（transactions, categories）。一覧/フォーム等の画面を含む
+  features/    # 機能単位のモジュール（transactions, categories, reports）。一覧/フォーム/集計画面を含む
   components/  # 機能横断の共有 UI（ToastProvider, ErrorBoundary, GlobalLoadingIndicator）
   test/        # テストセットアップ（setup.ts）
   main.tsx     # エントリ。ErrorBoundary / QueryClientProvider / ToastProvider / BrowserRouter を配線

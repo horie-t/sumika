@@ -2,7 +2,7 @@
 
 家計簿管理の SaaS サービスです。
 
-収支記録（収入/支出）の登録・一覧・編集・削除とカテゴリ管理ができる MVP。
+収支記録（収入/支出）の登録・一覧・編集・削除、カテゴリ管理、月次の集計・レポート（サマリ／カテゴリ別／推移）ができる。
 モノレポ構成（`backend/` Spring Boot API + `frontend/` React SPA）で、DB は PostgreSQL。
 認証は現状未実装（単一ユーザー前提。将来 `user_id` を追加できる設計）。
 
@@ -30,8 +30,8 @@ cd frontend && npm install && npm run dev
 
 ## 開発
 
-- タスクは GitHub Issue / マイルストーン（M0 基盤整備 → M1 backend CRUD → M2 frontend UI）で管理。
-- 1 Issue = 1 PR。詳細なコマンド・アーキテクチャは各ディレクトリの README と `CLAUDE.md` を参照。
+- タスクは GitHub Issue / マイルストーン（M0 基盤整備 → M1 backend CRUD → M2 frontend UI → M3 集計・レポート）で管理。
+- 1 Issue = 1 PR。詳細なコマンド・アーキテクチャは各ディレクトリの README と `CLAUDE.md`、開発ルールは `CONTRIBUTING.md` を参照。
 
 ## テスト
 
