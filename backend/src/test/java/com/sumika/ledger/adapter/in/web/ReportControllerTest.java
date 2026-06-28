@@ -1,11 +1,14 @@
 package com.sumika.ledger.adapter.in.web;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.sumika.common.security.SecurityConfig;
 import com.sumika.ledger.application.port.in.CategorySummaryLine;
 import com.sumika.ledger.application.port.in.GetMonthlySummaryQuery;
 import com.sumika.ledger.application.port.in.GetMonthlyTrendQuery;
@@ -18,16 +21,20 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ReportController.class)
+@Import(SecurityConfig.class)
 class ReportControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private GetMonthlySummaryQuery getMonthlySummaryQuery;
   @MockitoBean private GetMonthlyTrendQuery getMonthlyTrendQuery;
+  @MockitoBean private JwtDecoder jwtDecoder;
 
   @Test
   void monthlySummaryReturnsTotalsAndBreakdown() throws Exception {
@@ -41,7 +48,7 @@ class ReportControllerTest {
                 List.of(new CategorySummaryLine(2L, "食費", EntryType.EXPENSE, Money.of(50000)))));
 
     this.mockMvc
-        .perform(get("/api/reports/monthly-summary").param("month", "2026-06"))
+        .perform(get("/api/reports/monthly-summary").with(jwt()).param("month", "2026-06"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.month").value("2026-06"))
         .andExpect(jsonPath("$.totalIncome").value(300000))
@@ -62,7 +69,11 @@ class ReportControllerTest {
                 new MonthlyTotal(YearMonth.of(2026, 6), Money.ZERO, Money.of(1300))));
 
     this.mockMvc
-        .perform(get("/api/reports/monthly-trend").param("from", "2026-05").param("to", "2026-06"))
+        .perform(
+            get("/api/reports/monthly-trend")
+                .with(jwt())
+                .param("from", "2026-05")
+                .param("to", "2026-06"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].month").value("2026-05"))
         .andExpect(jsonPath("$[0].income").value(1000))
@@ -70,5 +81,14 @@ class ReportControllerTest {
         .andExpect(jsonPath("$[1].expense").value(1300));
 
     verify(this.getMonthlyTrendQuery).getMonthlyTrend(YearMonth.of(2026, 5), YearMonth.of(2026, 6));
+  }
+
+  @Test
+  void unauthenticatedReturns401() throws Exception {
+    this.mockMvc
+        .perform(get("/api/reports/monthly-summary").param("month", "2026-06"))
+        .andExpect(status().isUnauthorized());
+
+    verifyNoInteractions(this.getMonthlySummaryQuery);
   }
 }

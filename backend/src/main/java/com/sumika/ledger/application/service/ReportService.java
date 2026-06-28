@@ -6,10 +6,12 @@ import com.sumika.ledger.application.port.in.GetMonthlyTrendQuery;
 import com.sumika.ledger.application.port.in.MonthlySummary;
 import com.sumika.ledger.application.port.in.MonthlyTotal;
 import com.sumika.ledger.application.port.out.CategoryAmount;
+import com.sumika.ledger.application.port.out.CurrentUserProvider;
 import com.sumika.ledger.application.port.out.LoadReportPort;
 import com.sumika.ledger.application.port.out.MonthlyAmount;
 import com.sumika.ledger.domain.EntryType;
 import com.sumika.ledger.domain.Money;
+import com.sumika.ledger.domain.UserId;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -26,15 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 class ReportService implements GetMonthlySummaryQuery, GetMonthlyTrendQuery {
 
   private final LoadReportPort loadReportPort;
+  private final CurrentUserProvider currentUserProvider;
 
-  ReportService(LoadReportPort loadReportPort) {
+  ReportService(LoadReportPort loadReportPort, CurrentUserProvider currentUserProvider) {
     this.loadReportPort = loadReportPort;
+    this.currentUserProvider = currentUserProvider;
   }
 
   @Override
   public MonthlySummary getMonthlySummary(YearMonth month) {
+    UserId userId = this.currentUserProvider.currentUserId();
     List<CategoryAmount> rows =
-        this.loadReportPort.aggregateByCategory(month.atDay(1), month.atEndOfMonth());
+        this.loadReportPort.aggregateByCategory(userId, month.atDay(1), month.atEndOfMonth());
 
     Money totalIncome = sum(rows, EntryType.INCOME);
     Money totalExpense = sum(rows, EntryType.EXPENSE);
@@ -55,9 +60,10 @@ class ReportService implements GetMonthlySummaryQuery, GetMonthlyTrendQuery {
 
   @Override
   public List<MonthlyTotal> getMonthlyTrend(YearMonth from, YearMonth to) {
+    UserId userId = this.currentUserProvider.currentUserId();
     LocalDate rangeStart = from.atDay(1);
     LocalDate rangeEnd = to.atEndOfMonth();
-    List<MonthlyAmount> rows = this.loadReportPort.aggregateByMonth(rangeStart, rangeEnd);
+    List<MonthlyAmount> rows = this.loadReportPort.aggregateByMonth(userId, rangeStart, rangeEnd);
 
     Map<YearMonth, Money> incomeByMonth = new HashMap<>();
     Map<YearMonth, Money> expenseByMonth = new HashMap<>();

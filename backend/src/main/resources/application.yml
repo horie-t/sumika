@@ -13,6 +13,12 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak realm の issuer。既定はローカル docker-compose の Keycloak。
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8081/realms/sumika}
   mvc:
     # 標準例外も RFC 7807 (ProblemDetail) で返す
     problemdetails:

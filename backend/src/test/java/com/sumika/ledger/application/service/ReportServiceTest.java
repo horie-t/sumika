@@ -1,15 +1,18 @@
 package com.sumika.ledger.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.sumika.ledger.application.port.in.MonthlySummary;
 import com.sumika.ledger.application.port.in.MonthlyTotal;
 import com.sumika.ledger.application.port.out.CategoryAmount;
+import com.sumika.ledger.application.port.out.CurrentUserProvider;
 import com.sumika.ledger.application.port.out.LoadReportPort;
 import com.sumika.ledger.application.port.out.MonthlyAmount;
 import com.sumika.ledger.domain.EntryType;
 import com.sumika.ledger.domain.Money;
+import com.sumika.ledger.domain.UserId;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -22,19 +25,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ReportServiceTest {
 
+  private static final UserId USER = UserId.of("user-1");
+
   @Mock private LoadReportPort loadReportPort;
+  @Mock private CurrentUserProvider currentUserProvider;
 
   private ReportService service;
 
   @BeforeEach
   void setUp() {
-    this.service = new ReportService(this.loadReportPort);
+    when(this.currentUserProvider.currentUserId()).thenReturn(USER);
+    this.service = new ReportService(this.loadReportPort, this.currentUserProvider);
   }
 
   @Test
   void monthlySummaryComputesTotalsAndNet() {
     when(this.loadReportPort.aggregateByCategory(
-            LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
+            eq(USER), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30))))
         .thenReturn(
             List.of(
                 new CategoryAmount(2L, "食費", EntryType.EXPENSE, 50000),
@@ -55,7 +62,8 @@ class ReportServiceTest {
 
   @Test
   void monthlyTrendFillsMissingMonthsWithZero() {
-    when(this.loadReportPort.aggregateByMonth(LocalDate.of(2026, 4, 1), LocalDate.of(2026, 6, 30)))
+    when(this.loadReportPort.aggregateByMonth(
+            eq(USER), eq(LocalDate.of(2026, 4, 1)), eq(LocalDate.of(2026, 6, 30))))
         .thenReturn(
             List.of(
                 new MonthlyAmount(2026, 4, EntryType.INCOME, 300000),

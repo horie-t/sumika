@@ -21,6 +21,7 @@ class LedgerArchitectureTest {
         .withAdaptersLayer("adapter")
         .incoming("in.web")
         .outgoing("out.persistence")
+        .outgoing("out.security")
         .and()
         .withApplicationLayer("application")
         .incomingPorts("port.in")

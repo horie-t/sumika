@@ -3,6 +3,7 @@ package com.sumika.ledger.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.sumika.common.ResourceNotFoundException;
 import com.sumika.ledger.application.port.in.RegisterTransactionCommand;
 import com.sumika.ledger.application.port.in.UpdateTransactionCommand;
+import com.sumika.ledger.application.port.out.CurrentUserProvider;
 import com.sumika.ledger.application.port.out.DeleteTransactionPort;
 import com.sumika.ledger.application.port.out.LoadCategoryPort;
 import com.sumika.ledger.application.port.out.LoadTransactionPort;
@@ -21,6 +23,7 @@ import com.sumika.ledger.domain.EntryType;
 import com.sumika.ledger.domain.Money;
 import com.sumika.ledger.domain.Transaction;
 import com.sumika.ledger.domain.TransactionId;
+import com.sumika.ledger.domain.UserId;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -36,36 +39,40 @@ class TransactionServiceTest {
 
   private static final CategoryId FOOD = CategoryId.of(1);
   private static final LocalDate DATE = LocalDate.of(2026, 6, 27);
+  private static final UserId USER = UserId.of("user-1");
 
   @Mock private LoadTransactionPort loadTransactionPort;
   @Mock private SaveTransactionPort saveTransactionPort;
   @Mock private DeleteTransactionPort deleteTransactionPort;
   @Mock private LoadCategoryPort loadCategoryPort;
+  @Mock private CurrentUserProvider currentUserProvider;
 
   private TransactionService service;
 
   @BeforeEach
   void setUp() {
+    when(this.currentUserProvider.currentUserId()).thenReturn(USER);
     this.service =
         new TransactionService(
             this.loadTransactionPort,
             this.saveTransactionPort,
             this.deleteTransactionPort,
-            this.loadCategoryPort);
+            this.loadCategoryPort,
+            this.currentUserProvider);
   }
 
   private void expenseCategoryExists() {
-    when(this.loadCategoryPort.loadCategory(FOOD))
+    when(this.loadCategoryPort.loadCategory(eq(USER), eq(FOOD)))
         .thenReturn(Optional.of(Category.of(FOOD, "食費", EntryType.EXPENSE)));
   }
 
   @Test
   void registersTransactionWhenCategoryConsistent() {
     expenseCategoryExists();
-    when(this.saveTransactionPort.saveTransaction(any()))
+    when(this.saveTransactionPort.saveTransaction(eq(USER), any()))
         .thenAnswer(
             invocation -> {
-              Transaction t = invocation.getArgument(0);
+              Transaction t = invocation.getArgument(1);
               return Transaction.of(
                   TransactionId.of(7),
                   t.type(),
@@ -97,7 +104,7 @@ class TransactionServiceTest {
 
   @Test
   void registerRejectsMissingCategory() {
-    when(this.loadCategoryPort.loadCategory(FOOD)).thenReturn(Optional.empty());
+    when(this.loadCategoryPort.loadCategory(eq(USER), eq(FOOD))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
             () ->
@@ -109,7 +116,8 @@ class TransactionServiceTest {
 
   @Test
   void updateRejectsMissingTransaction() {
-    when(this.loadTransactionPort.loadTransaction(TransactionId.of(9))).thenReturn(Optional.empty());
+    when(this.loadTransactionPort.loadTransaction(eq(USER), eq(TransactionId.of(9))))
+        .thenReturn(Optional.empty());
 
     assertThatThrownBy(
             () ->
@@ -121,20 +129,20 @@ class TransactionServiceTest {
 
   @Test
   void getTransactionsDelegatesWithCriteria() {
-    when(this.loadTransactionPort.findTransactions(any())).thenReturn(List.of());
+    when(this.loadTransactionPort.findTransactions(eq(USER), any())).thenReturn(List.of());
 
     this.service.getTransactions(DATE, DATE, FOOD);
 
     ArgumentCaptor<TransactionSearchCriteria> captor =
         ArgumentCaptor.forClass(TransactionSearchCriteria.class);
-    verify(this.loadTransactionPort).findTransactions(captor.capture());
+    verify(this.loadTransactionPort).findTransactions(eq(USER), captor.capture());
     assertThat(captor.getValue().categoryId()).isEqualTo(FOOD);
     assertThat(captor.getValue().from()).isEqualTo(DATE);
   }
 
   @Test
   void deletesExistingTransaction() {
-    when(this.loadTransactionPort.loadTransaction(TransactionId.of(3)))
+    when(this.loadTransactionPort.loadTransaction(eq(USER), eq(TransactionId.of(3))))
         .thenReturn(
             Optional.of(
                 Transaction.of(
@@ -142,6 +150,6 @@ class TransactionServiceTest {
 
     this.service.deleteTransaction(TransactionId.of(3));
 
-    verify(this.deleteTransactionPort).deleteTransaction(TransactionId.of(3));
+    verify(this.deleteTransactionPort).deleteTransaction(eq(USER), eq(TransactionId.of(3)));
   }
 }

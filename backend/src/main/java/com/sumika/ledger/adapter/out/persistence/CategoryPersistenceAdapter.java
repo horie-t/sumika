@@ -5,14 +5,14 @@ import com.sumika.ledger.application.port.out.LoadCategoryPort;
 import com.sumika.ledger.application.port.out.SaveCategoryPort;
 import com.sumika.ledger.domain.Category;
 import com.sumika.ledger.domain.CategoryId;
+import com.sumika.ledger.domain.UserId;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 
-/** カテゴリの out ポート群を JPA で実装する永続化アダプタ。 */
+/** カテゴリの out ポート群を JPA で実装する永続化アダプタ。すべて利用者でスコープする。 */
 @Component
-class CategoryPersistenceAdapter
-    implements LoadCategoryPort, SaveCategoryPort, DeleteCategoryPort {
+class CategoryPersistenceAdapter implements LoadCategoryPort, SaveCategoryPort, DeleteCategoryPort {
 
   private final CategoryJpaRepository repository;
   private final CategoryMapper mapper;
@@ -23,28 +23,30 @@ class CategoryPersistenceAdapter
   }
 
   @Override
-  public Optional<Category> loadCategory(CategoryId id) {
-    return this.repository.findById(id.value()).map(this.mapper::toDomain);
+  public Optional<Category> loadCategory(UserId userId, CategoryId id) {
+    return this.repository.findByUserIdAndId(userId.value(), id.value()).map(this.mapper::toDomain);
   }
 
   @Override
-  public List<Category> loadAllCategories() {
-    return this.repository.findAll().stream().map(this.mapper::toDomain).toList();
+  public List<Category> loadAllCategories(UserId userId) {
+    return this.repository.findByUserIdOrderById(userId.value()).stream()
+        .map(this.mapper::toDomain)
+        .toList();
   }
 
   @Override
-  public boolean existsCategory(CategoryId id) {
-    return this.repository.existsById(id.value());
+  public boolean existsCategory(UserId userId, CategoryId id) {
+    return this.repository.existsByUserIdAndId(userId.value(), id.value());
   }
 
   @Override
-  public Category saveCategory(Category category) {
-    CategoryJpaEntity saved = this.repository.save(this.mapper.toJpaEntity(category));
+  public Category saveCategory(UserId userId, Category category) {
+    CategoryJpaEntity saved = this.repository.save(this.mapper.toJpaEntity(userId, category));
     return this.mapper.toDomain(saved);
   }
 
   @Override
-  public void deleteCategory(CategoryId id) {
-    this.repository.deleteById(id.value());
+  public void deleteCategory(UserId userId, CategoryId id) {
+    this.repository.deleteByUserIdAndId(userId.value(), id.value());
   }
 }

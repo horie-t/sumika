@@ -7,6 +7,7 @@ import com.sumika.ledger.application.port.in.RegisterTransactionCommand;
 import com.sumika.ledger.application.port.in.RegisterTransactionUseCase;
 import com.sumika.ledger.application.port.in.UpdateTransactionCommand;
 import com.sumika.ledger.application.port.in.UpdateTransactionUseCase;
+import com.sumika.ledger.application.port.out.CurrentUserProvider;
 import com.sumika.ledger.application.port.out.DeleteTransactionPort;
 import com.sumika.ledger.application.port.out.LoadCategoryPort;
 import com.sumika.ledger.application.port.out.LoadTransactionPort;
@@ -17,6 +18,7 @@ import com.sumika.ledger.domain.CategoryId;
 import com.sumika.ledger.domain.EntryType;
 import com.sumika.ledger.domain.Transaction;
 import com.sumika.ledger.domain.TransactionId;
+import com.sumika.ledger.domain.UserId;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -34,21 +36,25 @@ class TransactionService
   private final SaveTransactionPort saveTransactionPort;
   private final DeleteTransactionPort deleteTransactionPort;
   private final LoadCategoryPort loadCategoryPort;
+  private final CurrentUserProvider currentUserProvider;
 
   TransactionService(
       LoadTransactionPort loadTransactionPort,
       SaveTransactionPort saveTransactionPort,
       DeleteTransactionPort deleteTransactionPort,
-      LoadCategoryPort loadCategoryPort) {
+      LoadCategoryPort loadCategoryPort,
+      CurrentUserProvider currentUserProvider) {
     this.loadTransactionPort = loadTransactionPort;
     this.saveTransactionPort = saveTransactionPort;
     this.deleteTransactionPort = deleteTransactionPort;
     this.loadCategoryPort = loadCategoryPort;
+    this.currentUserProvider = currentUserProvider;
   }
 
   @Override
   public Transaction registerTransaction(RegisterTransactionCommand command) {
-    requireConsistentCategory(command.categoryId(), command.type());
+    UserId userId = this.currentUserProvider.currentUserId();
+    requireConsistentCategory(userId, command.categoryId(), command.type());
     Transaction transaction =
         Transaction.create(
             command.type(),
@@ -56,13 +62,14 @@ class TransactionService
             command.categoryId(),
             command.occurredOn(),
             command.memo());
-    return this.saveTransactionPort.saveTransaction(transaction);
+    return this.saveTransactionPort.saveTransaction(userId, transaction);
   }
 
   @Override
   public Transaction updateTransaction(UpdateTransactionCommand command) {
-    requireTransactionExists(command.id());
-    requireConsistentCategory(command.categoryId(), command.type());
+    UserId userId = this.currentUserProvider.currentUserId();
+    requireTransactionExists(userId, command.id());
+    requireConsistentCategory(userId, command.categoryId(), command.type());
     Transaction transaction =
         Transaction.of(
             command.id(),
@@ -71,33 +78,35 @@ class TransactionService
             command.categoryId(),
             command.occurredOn(),
             command.memo());
-    return this.saveTransactionPort.saveTransaction(transaction);
+    return this.saveTransactionPort.saveTransaction(userId, transaction);
   }
 
   @Override
   public void deleteTransaction(TransactionId id) {
-    requireTransactionExists(id);
-    this.deleteTransactionPort.deleteTransaction(id);
+    UserId userId = this.currentUserProvider.currentUserId();
+    requireTransactionExists(userId, id);
+    this.deleteTransactionPort.deleteTransaction(userId, id);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<Transaction> getTransactions(LocalDate from, LocalDate to, CategoryId categoryId) {
     return this.loadTransactionPort.findTransactions(
+        this.currentUserProvider.currentUserId(),
         new TransactionSearchCriteria(from, to, categoryId));
   }
 
-  private void requireTransactionExists(TransactionId id) {
-    if (this.loadTransactionPort.loadTransaction(id).isEmpty()) {
+  private void requireTransactionExists(UserId userId, TransactionId id) {
+    if (this.loadTransactionPort.loadTransaction(userId, id).isEmpty()) {
       throw new ResourceNotFoundException("収支記録が見つかりません: " + id.value());
     }
   }
 
-  /** カテゴリの存在と、収支種別がカテゴリ種別に一致することを検証する。 */
-  private void requireConsistentCategory(CategoryId categoryId, EntryType type) {
+  /** カテゴリの存在（その利用者のもの）と、収支種別がカテゴリ種別に一致することを検証する。 */
+  private void requireConsistentCategory(UserId userId, CategoryId categoryId, EntryType type) {
     Category category =
         this.loadCategoryPort
-            .loadCategory(categoryId)
+            .loadCategory(userId, categoryId)
             .orElseThrow(
                 () -> new ResourceNotFoundException("カテゴリが見つかりません: " + categoryId.value()));
     if (category.type() != type) {

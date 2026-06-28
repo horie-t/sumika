@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.sumika.common.security.SecurityConfig;
 import com.sumika.ledger.application.port.in.DeleteTransactionUseCase;
 import com.sumika.ledger.application.port.in.GetTransactionsQuery;
 import com.sumika.ledger.application.port.in.RegisterTransactionUseCase;
@@ -26,11 +28,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(TransactionController.class)
+@Import(SecurityConfig.class)
 class TransactionControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -39,6 +44,7 @@ class TransactionControllerTest {
   @MockitoBean private UpdateTransactionUseCase updateTransactionUseCase;
   @MockitoBean private DeleteTransactionUseCase deleteTransactionUseCase;
   @MockitoBean private GetTransactionsQuery getTransactionsQuery;
+  @MockitoBean private JwtDecoder jwtDecoder;
 
   @Test
   void registerReturns201() throws Exception {
@@ -55,6 +61,7 @@ class TransactionControllerTest {
     this.mockMvc
         .perform(
             post("/api/transactions")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"type\":\"EXPENSE\",\"amount\":1200,\"categoryId\":1,"
@@ -70,6 +77,7 @@ class TransactionControllerTest {
     this.mockMvc
         .perform(
             post("/api/transactions")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"type\":\"EXPENSE\",\"amount\":0,\"categoryId\":1,"
@@ -93,7 +101,11 @@ class TransactionControllerTest {
                     null)));
 
     this.mockMvc
-        .perform(get("/api/transactions").param("from", "2026-06-01").param("categoryId", "1"))
+        .perform(
+            get("/api/transactions")
+                .with(jwt())
+                .param("from", "2026-06-01")
+                .param("categoryId", "1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].amount").value(500));
 
@@ -103,7 +115,9 @@ class TransactionControllerTest {
 
   @Test
   void deleteReturns204() throws Exception {
-    this.mockMvc.perform(delete("/api/transactions/3")).andExpect(status().isNoContent());
+    this.mockMvc
+        .perform(delete("/api/transactions/3").with(jwt()))
+        .andExpect(status().isNoContent());
 
     verify(this.deleteTransactionUseCase).deleteTransaction(TransactionId.of(3));
   }
@@ -116,11 +130,19 @@ class TransactionControllerTest {
     this.mockMvc
         .perform(
             post("/api/transactions")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"type\":\"INCOME\",\"amount\":100,\"categoryId\":1,"
                         + "\"occurredOn\":\"2026-06-27\"}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("収支の種別がカテゴリの種別と一致しません"));
+  }
+
+  @Test
+  void unauthenticatedReturns401() throws Exception {
+    this.mockMvc.perform(get("/api/transactions")).andExpect(status().isUnauthorized());
+
+    verifyNoInteractions(this.getTransactionsQuery);
   }
 }
