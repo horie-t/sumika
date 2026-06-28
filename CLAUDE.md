@@ -10,17 +10,25 @@ Issues/milestones (M0 基盤整備 → M1 backend CRUD → M2 frontend UI → M3
 
 MVP scope is income/expense records (収支記録) CRUD + category management; beyond that the app
 provides monthly reporting (集計・レポート: summary / per-category / trend) via read-only
-`/api/reports` aggregation endpoints. **Auth is intentionally deferred** — the app is single-user
-for now, but DB tables are designed so a `user_id` column can be added later.
+`/api/reports` aggregation endpoints. **Auth is Keycloak (OIDC)**: the backend is an OAuth2
+Resource Server validating Keycloak JWTs and every `categories`/`transactions` row carries a
+`user_id` (the JWT `sub`), so data is per-user isolated (multi-user). The frontend logs in via
+keycloak-js.
 
 ## Commands
 
 Local DB (required before running/testing the backend against a real DB):
 
 ```bash
-docker compose up -d db     # PostgreSQL 16 on localhost:5432 (db/user/pass all "sumika")
-docker compose down         # stop (keep data) / down -v to drop the volume
+docker compose up -d db keycloak   # PostgreSQL 16 (:5432, db/user/pass "sumika") + Keycloak (:8081)
+docker compose down                # stop (keep data) / down -v to drop the volume
 ```
+
+Keycloak realm `sumika` is imported from `keycloak/realm-sumika.json` (issuer
+`http://localhost:8081/realms/sumika`, SPA client `sumika-frontend`, demo user `demo`/`demo`).
+After a schema change touching auth, recreate the DB volume (`docker compose down -v`) since
+`user_id` is `NOT NULL` (no backfill). Backend issuer-uri overridable via
+`SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI`.
 
 Backend (`backend/`, Java 25 + Gradle wrapper; needs Docker for Testcontainers tests):
 

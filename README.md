@@ -4,7 +4,7 @@
 
 収支記録（収入/支出）の登録・一覧・編集・削除、カテゴリ管理、月次の集計・レポート（サマリ／カテゴリ別／推移）ができる。
 モノレポ構成（`backend/` Spring Boot API + `frontend/` React SPA）で、DB は PostgreSQL。
-認証は現状未実装（単一ユーザー前提。将来 `user_id` を追加できる設計）。
+認証は **Keycloak（OIDC）** によるログインで、データは利用者ごとに分離される（マルチユーザー）。
 
 ## 構成
 
@@ -16,8 +16,8 @@
 ## クイックスタート
 
 ```bash
-# 1. DB 起動
-docker compose up -d db
+# 1. DB と認証サーバー（Keycloak）を起動
+docker compose up -d db keycloak
 
 # 2. backend（:8080、Swagger UI: /swagger-ui/index.html）
 cd backend && ./gradlew bootRun
@@ -26,7 +26,8 @@ cd backend && ./gradlew bootRun
 cd frontend && npm install && npm run dev
 ```
 
-ブラウザで http://localhost:5173 を開く。
+ブラウザで http://localhost:5173 を開き、Keycloak のログイン画面で `demo` / `demo` でログインする。
+（Keycloak 管理コンソール: http://localhost:8081/ admin/admin。詳細は [docs/README.md](docs/README.md)）
 
 ## 開発
 
